@@ -52,3 +52,35 @@ export async function copyThemeToClipboard(theme: MessageTheme): Promise<void> {
   const json = exportTheme(theme);
   await navigator.clipboard.writeText(json);
 }
+
+/**
+ * Download both dark and light theme versions
+ */
+export function downloadBothThemes(darkTheme: MessageTheme, lightTheme: MessageTheme): void {
+  // Download dark theme
+  const darkJson = exportTheme(darkTheme);
+  const darkBlob = new Blob([darkJson], { type: 'application/json' });
+  const darkUrl = URL.createObjectURL(darkBlob);
+  const darkLink = document.createElement('a');
+  darkLink.href = darkUrl;
+  const baseName = darkTheme.name.toLowerCase().replace(/\s+/g, '-').replace(/-?\(?(dark|light)\)?-?/gi, '');
+  darkLink.download = `${baseName}-dark.json`;
+  document.body.appendChild(darkLink);
+  darkLink.click();
+  document.body.removeChild(darkLink);
+  URL.revokeObjectURL(darkUrl);
+
+  // Download light theme after a short delay
+  setTimeout(() => {
+    const lightJson = exportTheme(lightTheme);
+    const lightBlob = new Blob([lightJson], { type: 'application/json' });
+    const lightUrl = URL.createObjectURL(lightBlob);
+    const lightLink = document.createElement('a');
+    lightLink.href = lightUrl;
+    lightLink.download = `${baseName}-light.json`;
+    document.body.appendChild(lightLink);
+    lightLink.click();
+    document.body.removeChild(lightLink);
+    URL.revokeObjectURL(lightUrl);
+  }, 100);
+}
