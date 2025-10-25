@@ -5,6 +5,7 @@ import { downloadTheme, copyThemeToClipboard } from './utils/themeExporter';
 import ColorPicker from './components/ColorPicker';
 import MinecraftChatPreview from './components/MinecraftChatPreview';
 import MinecraftItemPreview from './components/MinecraftItemPreview';
+import AdvancedEditor from './components/AdvancedEditor';
 
 function App() {
   const [baseColor, setBaseColor] = useState('#6750A4');
@@ -29,6 +30,10 @@ function App() {
     await copyThemeToClipboard(theme);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleThemeChange = (updatedTheme: MessageTheme) => {
+    setTheme(updatedTheme);
   };
 
   return (
@@ -114,6 +119,9 @@ function App() {
 
           {/* Right Side - Previews */}
           <div className="lg:col-span-8 space-y-4">
+            {/* Advanced Editor */}
+            <AdvancedEditor theme={theme} onThemeChange={handleThemeChange} />
+
             {/* Chat Preview Card */}
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md p-6 border border-purple-100/50">
               <div className="flex items-center gap-2 mb-4">
