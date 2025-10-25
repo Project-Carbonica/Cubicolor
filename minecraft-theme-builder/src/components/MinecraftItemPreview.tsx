@@ -24,25 +24,21 @@ const MinecraftItemPreview: React.FC<Props> = ({ theme }) => {
   return (
     <div className="minecraft-tooltip p-4 inline-block min-w-[300px]">
       <div className="space-y-1 text-sm">
-        {renderText('⚔ Legendary Sword', theme.messages.TITLE)}
+        {renderText('Kanal 1', theme.messages.TITLE)}
         <div className="h-px bg-gray-600 my-2"></div>
-        {renderText('Damage: ', theme.messages.LABEL)}{renderText('+15', theme.messages.SUCCESS)}
+        {renderText('Bu kanala giriş yapabilmek için ', theme.messages.BODY)}{renderText('sol tıklayınız', theme.messages.LINK)}
         <br />
-        {renderText('Speed: ', theme.messages.LABEL)}{renderText('Fast', theme.messages.INFO)}
-        <br />
-        {renderText('Durability: ', theme.messages.LABEL)}{renderText('500/500', theme.messages.PRIMARY)}
+        {renderText('Bu kanaldan çıkış yapabilmek için ', theme.messages.BODY)}{renderText('sağ tıklayınız', theme.messages.LINK)}
         <div className="h-px bg-gray-600 my-2"></div>
-        {renderText('Special Abilities:', theme.messages.SUBTITLE)}
-        <br />
-        {renderText('• Critical Strike', theme.messages.HIGHLIGHT)}
-        <br />
-        <span>  </span>{renderText('Deal 2x damage on critical hits', theme.messages.BODY)}
-        <br />
-        {renderText('• Fire Aspect', theme.messages.ACCENT)}
-        <br />
-        <span>  </span>{renderText('Sets enemies on fire', theme.messages.BODY)}
+        {renderText('Ayrıca bu kanalı görmek için ', theme.messages.MUTED)}{renderText('VIP', theme.messages.HIGHLIGHT)}{renderText(' olmalısınız.', theme.messages.MUTED)}
         <div className="h-px bg-gray-600 my-2"></div>
-        {renderText('Epic', theme.messages.PRIMARY)}
+        {renderText('Kanal Bilgileri:', theme.messages.SUBTITLE)}
+        <br />
+        {renderText('Aktif Oyuncular: ', theme.messages.LABEL)}{renderText('23', theme.messages.SUCCESS)}
+        <br />
+        {renderText('Durum: ', theme.messages.LABEL)}{renderText('Açık', theme.messages.INFO)}
+        <br />
+        {renderText('Tip: ', theme.messages.LABEL)}{renderText('Genel Sohbet', theme.messages.ACCENT)}
       </div>
     </div>
   );

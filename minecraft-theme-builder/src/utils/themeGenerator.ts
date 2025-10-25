@@ -123,6 +123,29 @@ function shiftHue(hex: string, hueShift: number): string {
 }
 
 /**
+ * Adjust colors for Minecraft backgrounds (black backgrounds for dark themes)
+ * For dark themes: Darken very bright colors slightly to avoid being too harsh
+ * For light themes: No adjustment needed
+ */
+function adjustForMinecraft(hex: string, isDark: boolean): string {
+  if (!isDark) return hex; // Light themes don't need adjustment
+
+  const rgb = hexToRgb(hex);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+  // For dark themes, if color is too bright, darken it slightly
+  // Keep lightness between 50-85% for better readability on black
+  if (hsl.l > 85) {
+    hsl.l = 75; // Slightly darker
+  } else if (hsl.l < 35) {
+    hsl.l = 45; // Slightly brighter if too dark
+  }
+
+  const newRgb = hslToRgb(hsl.h, hsl.s, hsl.l);
+  return rgbToHex(newRgb.r, newRgb.g, newRgb.b);
+}
+
+/**
  * Auto-generate a complete theme from a single base color
  */
 export function generateTheme(baseColor: string, themeName: string = 'Generated Theme'): MessageTheme {
@@ -132,80 +155,92 @@ export function generateTheme(baseColor: string, themeName: string = 'Generated 
   // Determine if we're in dark or light mode based on lightness
   const isDark = hsl.l < 50;
 
+  // Generate harmonious colors based on the base color
+  const primary = adjustForMinecraft(baseColor, isDark);
+  const secondary = adjustForMinecraft(shiftHue(baseColor, 30), isDark); // Analogous
+  const accent = adjustForMinecraft(shiftHue(baseColor, -30), isDark); // Analogous (other direction)
+  const highlight = adjustForMinecraft(adjustLightness(adjustSaturation(baseColor, 20), isDark ? 15 : -15), isDark);
+
+  // Create error/success/warning with base color's saturation for harmony
+  const createSemanticColor = (targetHue: number, lightness: number) => {
+    const semanticRgb = hslToRgb(targetHue, hsl.s, lightness);
+    return adjustForMinecraft(rgbToHex(semanticRgb.r, semanticRgb.g, semanticRgb.b), isDark);
+  };
+
   const messages: MessageTheme['messages'] = {
-    // Error - Red hue
+    // Error - Red hue with base saturation
     ERROR: {
-      color: isDark ? '#FF5555' : '#B00020',
+      color: createSemanticColor(0, isDark ? 60 : 70),
       decorations: ['BOLD'],
     },
-    // Success - Green hue
+    // Success - Green hue with base saturation
     SUCCESS: {
-      color: isDark ? '#55FF55' : '#2E7D32',
+      color: createSemanticColor(120, isDark ? 60 : 70),
       decorations: ['BOLD'],
     },
-    // Warning - Yellow/Orange hue
+    // Warning - Orange hue with base saturation
     WARNING: {
-      color: isDark ? '#FFAA00' : '#F57C00',
+      color: createSemanticColor(35, isDark ? 65 : 75),
       decorations: ['BOLD'],
     },
-    // Info - Blue hue
+    // Info - Use secondary color for harmony
     INFO: {
-      color: isDark ? '#55FFFF' : '#1976D2',
+      color: secondary,
       decorations: [],
     },
-    // Highlight - Based on base color, brighter
+    // Highlight - Brighter version of base
     HIGHLIGHT: {
-      color: adjustLightness(adjustSaturation(baseColor, 20), isDark ? 20 : -10),
+      color: highlight,
       decorations: ['BOLD'],
     },
     // Primary - Base color
     PRIMARY: {
-      color: baseColor,
+      color: primary,
       decorations: ['BOLD'],
     },
-    // Secondary - Complementary color (hue shift)
+    // Secondary - Analogous color
     SECONDARY: {
-      color: shiftHue(baseColor, 180),
+      color: secondary,
       decorations: [],
     },
-    // Accent - Analogous color
+    // Accent - Analogous color (other direction)
     ACCENT: {
-      color: shiftHue(baseColor, 30),
+      color: accent,
       decorations: [],
     },
-    // Title - High contrast
+    // Title - High contrast, brighter in light mode
     TITLE: {
-      color: isDark ? '#FFFFFF' : '#000000',
-      decorations: ['BOLD', 'UNDERLINED'],
+      color: isDark ? '#E0E0E0' : '#FFFFFF',
+      decorations: ['BOLD'],
     },
     // Subtitle - Medium emphasis
     SUBTITLE: {
-      color: isDark ? '#E0E0E0' : '#212121',
-      decorations: ['BOLD'],
+      color: isDark ? '#C0C0C0' : '#F0F0F0',
+      decorations: [],
     },
     // Body - Normal text
     BODY: {
-      color: isDark ? '#FFFFFF' : '#000000',
+      color: isDark ? '#D0D0D0' : '#FFFFFF',
       decorations: [],
     },
     // Label - Lower emphasis
     LABEL: {
-      color: isDark ? '#B0B0B0' : '#616161',
+      color: isDark ? '#A0A0A0' : '#C0C0C0',
       decorations: [],
     },
     // Muted - Very low emphasis
     MUTED: {
-      color: isDark ? '#757575' : '#9E9E9E',
-      decorations: ['ITALIC'],
+      color: isDark ? '#808080' : '#A0A0A0',
+      decorations: [],
     },
-    // Link - Blue, underlined
+    // Link - Use accent color for harmony
     LINK: {
-      color: isDark ? '#55FFFF' : '#1976D2',
+      color: accent,
       decorations: ['UNDERLINED'],
     },
     // Disabled - Gray, strikethrough
     DISABLED: {
-      color: isDark ? '#555555' : '#BDBDBD',
+      color: isDark ? '#606060' : '#808080',
       decorations: ['STRIKETHROUGH'],
     },
   };
@@ -231,37 +266,35 @@ export function getPresetThemes(): Record<string, MessageTheme> {
         HIGHLIGHT: { color: '#FFAA00', decorations: ['BOLD'] },
         PRIMARY: { color: '#5555FF', decorations: ['BOLD'] },
         SECONDARY: { color: '#AA00AA', decorations: [] },
-        MUTED: { color: '#AAAAAA', decorations: [] },
+        MUTED: { color: '#999999', decorations: [] },
         TITLE: { color: '#FFFF55', decorations: ['BOLD'] },
-        SUBTITLE: { color: '#FFFFFF', decorations: ['BOLD'] },
-        BODY: { color: '#FFFFFF', decorations: [] },
-        LABEL: { color: '#AAAAAA', decorations: [] },
+        SUBTITLE: { color: '#D0D0D0', decorations: [] },
+        BODY: { color: '#D0D0D0', decorations: [] },
+        LABEL: { color: '#A0A0A0', decorations: [] },
         ACCENT: { color: '#FF55FF', decorations: [] },
         LINK: { color: '#55FFFF', decorations: ['UNDERLINED'] },
-        DISABLED: { color: '#555555', decorations: [] },
+        DISABLED: { color: '#606060', decorations: [] },
       },
     },
     'minecraft-light': {
       name: 'Minecraft Light',
       messages: {
-        ERROR: { color: '#B00020', decorations: ['BOLD'] },
-        SUCCESS: { color: '#2E7D32', decorations: ['BOLD'] },
-        WARNING: { color: '#F57C00', decorations: ['BOLD'] },
-        INFO: { color: '#1976D2', decorations: [] },
-        HIGHLIGHT: { color: '#C51162', decorations: ['BOLD'] },
-        PRIMARY: { color: '#1565C0', decorations: ['BOLD'] },
-        SECONDARY: { color: '#6A1B9A', decorations: [] },
-        MUTED: { color: '#757575', decorations: [] },
-        TITLE: { color: '#000000', decorations: ['BOLD'] },
-        SUBTITLE: { color: '#424242', decorations: ['BOLD'] },
-        BODY: { color: '#212121', decorations: [] },
-        LABEL: { color: '#616161', decorations: [] },
-        ACCENT: { color: '#D81B60', decorations: [] },
-        LINK: { color: '#1976D2', decorations: ['UNDERLINED'] },
-        DISABLED: { color: '#BDBDBD', decorations: [] },
+        ERROR: { color: '#FF8888', decorations: ['BOLD'] },
+        SUCCESS: { color: '#88FF88', decorations: ['BOLD'] },
+        WARNING: { color: '#FFCC66', decorations: ['BOLD'] },
+        INFO: { color: '#66BBFF', decorations: [] },
+        HIGHLIGHT: { color: '#FF99CC', decorations: ['BOLD'] },
+        PRIMARY: { color: '#6699FF', decorations: ['BOLD'] },
+        SECONDARY: { color: '#BB77DD', decorations: [] },
+        MUTED: { color: '#A0A0A0', decorations: [] },
+        TITLE: { color: '#FFFFFF', decorations: ['BOLD'] },
+        SUBTITLE: { color: '#F0F0F0', decorations: [] },
+        BODY: { color: '#FFFFFF', decorations: [] },
+        LABEL: { color: '#C0C0C0', decorations: [] },
+        ACCENT: { color: '#FF99BB', decorations: [] },
+        LINK: { color: '#66BBFF', decorations: ['UNDERLINED'] },
+        DISABLED: { color: '#808080', decorations: [] },
       },
     },
-    'material-dark': generateTheme('#BB86FC', 'Material Dark'),
-    'material-light': generateTheme('#6750A4', 'Material Light'),
   };
 }

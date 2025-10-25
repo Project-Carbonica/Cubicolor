@@ -27,9 +27,10 @@ const MinecraftChatPreview: React.FC<Props> = ({ theme }) => {
       <div>{renderText('✓ Success: ', theme.messages.SUCCESS)}{renderText('Theme saved successfully', theme.messages.BODY)}</div>
       <div>{renderText('⚠ Warning: ', theme.messages.WARNING)}{renderText('Low health detected', theme.messages.BODY)}</div>
       <div>{renderText('ℹ Info: ', theme.messages.INFO)}{renderText('Press F to open menu', theme.messages.BODY)}</div>
-      <div>{renderText('[Server] ', theme.messages.HIGHLIGHT)}{renderText('Player joined the game', theme.messages.BODY)}</div>
-      <div>{renderText('<Player> ', theme.messages.PRIMARY)}{renderText('Hello world!', theme.messages.BODY)}</div>
-      <div>{renderText('Tip: ', theme.messages.ACCENT)}{renderText('Use /help for commands ', theme.messages.MUTED)}</div>
+      <div>{renderText('[Prefix] ', theme.messages.ACCENT)}{renderText('Senin mevcut bakiyen: ', theme.messages.BODY)}{renderText('23', theme.messages.HIGHLIGHT)}{renderText(' cubric', theme.messages.BODY)}</div>
+      <div>{renderText('[Server] ', theme.messages.PRIMARY)}{renderText('Player joined the game', theme.messages.BODY)}</div>
+      <div>{renderText('<Player> ', theme.messages.SECONDARY)}{renderText('Hello world!', theme.messages.BODY)}</div>
+      <div>{renderText('Tip: ', theme.messages.INFO)}{renderText('Use ', theme.messages.BODY)}{renderText('/help', theme.messages.LINK)}{renderText(' for commands', theme.messages.MUTED)}</div>
     </div>
   );
 };

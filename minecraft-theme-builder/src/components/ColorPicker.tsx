@@ -12,24 +12,24 @@ const ColorPicker: React.FC<Props> = ({ color, onChange, label }) => {
 
   return (
     <div className="relative">
-      {label && <label className="block text-sm font-medium mb-1">{label}</label>}
+      {label && <label className="block text-xs font-medium mb-2 text-purple-900/70">{label}</label>}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-10 rounded border-2 border-gray-300 hover:border-gray-400 transition-colors flex items-center px-3 gap-2 bg-white"
+        className="w-full h-16 rounded-xl border-2 border-purple-200/50 hover:border-purple-300 transition-colors flex items-center justify-center gap-3 bg-white/50"
       >
         <div
-          className="w-6 h-6 rounded border border-gray-400"
+          className="w-10 h-10 rounded-full border-2 border-gray-300 shadow-sm"
           style={{ backgroundColor: color }}
         />
-        <span className="font-mono text-sm">{color.toUpperCase()}</span>
+        <span className="font-mono text-sm text-purple-900">{color.toUpperCase()}</span>
       </button>
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[100]"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute z-20 mt-2 p-3 bg-white rounded-lg shadow-xl border border-gray-200">
+          <div className="absolute z-[101] mt-2 p-4 bg-white rounded-xl shadow-2xl border border-purple-200">
             <HexColorPicker color={color} onChange={onChange} />
           </div>
         </>
