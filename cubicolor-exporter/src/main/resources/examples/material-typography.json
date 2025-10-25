@@ -1,0 +1,56 @@
+{
+  "name": "material-typography",
+  "styles": {
+    "displayLarge": {
+      "color": "#000000",
+      "decorations": ["BOLD"]
+    },
+    "displayMedium": {
+      "color": "#000000",
+      "decorations": ["BOLD"]
+    },
+    "displaySmall": {
+      "color": "#000000"
+    },
+    "headlineLarge": {
+      "color": "#212121",
+      "decorations": ["BOLD"]
+    },
+    "headlineMedium": {
+      "color": "#212121",
+      "decorations": ["BOLD"]
+    },
+    "headlineSmall": {
+      "color": "#212121"
+    },
+    "titleLarge": {
+      "color": "#424242",
+      "decorations": ["BOLD"]
+    },
+    "titleMedium": {
+      "color": "#424242"
+    },
+    "titleSmall": {
+      "color": "#424242"
+    },
+    "bodyLarge": {
+      "color": "#424242"
+    },
+    "bodyMedium": {
+      "color": "#424242"
+    },
+    "bodySmall": {
+      "color": "#757575"
+    },
+    "labelLarge": {
+      "color": "#757575"
+    },
+    "labelMedium": {
+      "color": "#757575"
+    },
+    "labelSmall": {
+      "color": "#9E9E9E",
+      "decorations": ["ITALIC"]
+    }
+  }
+}

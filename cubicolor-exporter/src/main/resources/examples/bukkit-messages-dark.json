@@ -1,0 +1,60 @@
+{
+  "name": "bukkit-messages-dark",
+  "messages": {
+    "ERROR": {
+      "color": "#CF6679",
+      "decorations": ["BOLD"]
+    },
+    "SUCCESS": {
+      "color": "#4CAF50",
+      "decorations": ["BOLD"]
+    },
+    "WARNING": {
+      "color": "#FFC107",
+      "decorations": ["BOLD"]
+    },
+    "INFO": {
+      "color": "#2196F3"
+    },
+    "HIGHLIGHT": {
+      "color": "#FF0266",
+      "decorations": ["BOLD"]
+    },
+    "PRIMARY": {
+      "color": "#BB86FC",
+      "decorations": ["BOLD"]
+    },
+    "SECONDARY": {
+      "color": "#03DAC6"
+    },
+    "MUTED": {
+      "color": "#757575",
+      "decorations": ["ITALIC"]
+    },
+    "TITLE": {
+      "color": "#FFFFFF",
+      "decorations": ["BOLD", "UNDERLINED"]
+    },
+    "SUBTITLE": {
+      "color": "#E0E0E0",
+      "decorations": ["BOLD"]
+    },
+    "BODY": {
+      "color": "#FFFFFF"
+    },
+    "LABEL": {
+      "color": "#B0B0B0"
+    },
+    "ACCENT": {
+      "color": "#FF0266"
+    },
+    "LINK": {
+      "color": "#2196F3",
+      "decorations": ["UNDERLINED"]
+    },
+    "DISABLED": {
+      "color": "#616161",
+      "decorations": ["STRIKETHROUGH"]
+    }
+  }
+}

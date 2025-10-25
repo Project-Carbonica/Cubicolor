@@ -1,0 +1,19 @@
+{
+  "name": "light-theme",
+  "colors": {
+    "PRIMARY": "#6200EE",
+    "SECONDARY": "#03DAC6",
+    "TERTIARY": "#9C27B0",
+    "ACCENT": "#FF4081",
+    "BACKGROUND": "#FFFFFF",
+    "SURFACE": "#F5F5F5",
+    "ERROR": "#B00020",
+    "SUCCESS": "#4CAF50",
+    "WARNING": "#FF9800",
+    "INFO": "#2196F3",
+    "TEXT": "#000000",
+    "TEXT_SECONDARY": "#757575",
+    "BORDER": "#E0E0E0",
+    "OVERLAY": "#000000"
+  }
+}

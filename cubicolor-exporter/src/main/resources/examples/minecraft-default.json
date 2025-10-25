@@ -1,0 +1,58 @@
+{
+  "name": "minecraft-default",
+  "messages": {
+    "ERROR": {
+      "color": "#FF5555",
+      "decorations": ["BOLD"]
+    },
+    "SUCCESS": {
+      "color": "#55FF55",
+      "decorations": ["BOLD"]
+    },
+    "WARNING": {
+      "color": "#FFFF55",
+      "decorations": ["BOLD"]
+    },
+    "INFO": {
+      "color": "#55FFFF"
+    },
+    "HIGHLIGHT": {
+      "color": "#FFAA00",
+      "decorations": ["BOLD"]
+    },
+    "PRIMARY": {
+      "color": "#5555FF",
+      "decorations": ["BOLD"]
+    },
+    "SECONDARY": {
+      "color": "#AA00AA"
+    },
+    "MUTED": {
+      "color": "#AAAAAA"
+    },
+    "TITLE": {
+      "color": "#FFFF55",
+      "decorations": ["BOLD"]
+    },
+    "SUBTITLE": {
+      "color": "#FFFFFF",
+      "decorations": ["BOLD"]
+    },
+    "BODY": {
+      "color": "#FFFFFF"
+    },
+    "LABEL": {
+      "color": "#AAAAAA"
+    },
+    "ACCENT": {
+      "color": "#FF55FF"
+    },
+    "LINK": {
+      "color": "#55FFFF",
+      "decorations": ["UNDERLINED"]
+    },
+    "DISABLED": {
+      "color": "#555555"
+    }
+  }
+}
