@@ -123,22 +123,29 @@ function shiftHue(hex: string, hueShift: number): string {
 }
 
 /**
- * Adjust colors for Minecraft backgrounds (black backgrounds for dark themes)
- * For dark themes: Darken very bright colors slightly to avoid being too harsh
- * For light themes: No adjustment needed
+ * Adjust colors for Minecraft backgrounds (always black backgrounds)
+ * Ensures colors are visible on black by keeping lightness in readable range
  */
-function adjustForMinecraft(hex: string, isDark: boolean): string {
-  if (!isDark) return hex; // Light themes don't need adjustment
-
+function adjustForMinecraft(hex: string, preferBrighter: boolean = false): string {
   const rgb = hexToRgb(hex);
   const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
 
-  // For dark themes, if color is too bright, darken it slightly
-  // Keep lightness between 50-85% for better readability on black
-  if (hsl.l > 85) {
-    hsl.l = 75; // Slightly darker
-  } else if (hsl.l < 35) {
-    hsl.l = 45; // Slightly brighter if too dark
+  // Minecraft backgrounds are always black, so we need visible colors
+  // Keep lightness between 45-80% for better readability
+  if (preferBrighter) {
+    // Light theme: brighter colors
+    if (hsl.l > 85) {
+      hsl.l = 85;
+    } else if (hsl.l < 50) {
+      hsl.l = 60;
+    }
+  } else {
+    // Dark theme: slightly muted but still visible
+    if (hsl.l > 75) {
+      hsl.l = 70;
+    } else if (hsl.l < 40) {
+      hsl.l = 50;
+    }
   }
 
   const newRgb = hslToRgb(hsl.h, hsl.s, hsl.l);
@@ -148,39 +155,36 @@ function adjustForMinecraft(hex: string, isDark: boolean): string {
 /**
  * Auto-generate a complete theme from a single base color
  */
-export function generateTheme(baseColor: string, themeName: string = 'Generated Theme'): MessageTheme {
+export function generateTheme(baseColor: string, themeName: string = 'Generated Theme', preferBrighter: boolean = false): MessageTheme {
   const rgb = hexToRgb(baseColor);
   const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
 
-  // Determine if we're in dark or light mode based on lightness
-  const isDark = hsl.l < 50;
-
   // Generate harmonious colors based on the base color
-  const primary = adjustForMinecraft(baseColor, isDark);
-  const secondary = adjustForMinecraft(shiftHue(baseColor, 30), isDark); // Analogous
-  const accent = adjustForMinecraft(shiftHue(baseColor, -30), isDark); // Analogous (other direction)
-  const highlight = adjustForMinecraft(adjustLightness(adjustSaturation(baseColor, 20), isDark ? 15 : -15), isDark);
+  const primary = adjustForMinecraft(baseColor, preferBrighter);
+  const secondary = adjustForMinecraft(shiftHue(baseColor, 30), preferBrighter); // Analogous
+  const accent = adjustForMinecraft(shiftHue(baseColor, -30), preferBrighter); // Analogous (other direction)
+  const highlight = adjustForMinecraft(adjustLightness(adjustSaturation(baseColor, 20), preferBrighter ? 20 : 15), preferBrighter);
 
   // Create error/success/warning with base color's saturation for harmony
   const createSemanticColor = (targetHue: number, lightness: number) => {
     const semanticRgb = hslToRgb(targetHue, hsl.s, lightness);
-    return adjustForMinecraft(rgbToHex(semanticRgb.r, semanticRgb.g, semanticRgb.b), isDark);
+    return adjustForMinecraft(rgbToHex(semanticRgb.r, semanticRgb.g, semanticRgb.b), preferBrighter);
   };
 
   const messages: MessageTheme['messages'] = {
     // Error - Red hue with base saturation
     ERROR: {
-      color: createSemanticColor(0, isDark ? 60 : 70),
+      color: createSemanticColor(0, preferBrighter ? 65 : 60),
       decorations: ['BOLD'],
     },
     // Success - Green hue with base saturation
     SUCCESS: {
-      color: createSemanticColor(120, isDark ? 60 : 70),
+      color: createSemanticColor(120, preferBrighter ? 65 : 60),
       decorations: ['BOLD'],
     },
     // Warning - Orange hue with base saturation
     WARNING: {
-      color: createSemanticColor(35, isDark ? 65 : 75),
+      color: createSemanticColor(35, preferBrighter ? 70 : 65),
       decorations: ['BOLD'],
     },
     // Info - Use secondary color for harmony
@@ -210,27 +214,27 @@ export function generateTheme(baseColor: string, themeName: string = 'Generated 
     },
     // Title - High contrast, brighter in light mode
     TITLE: {
-      color: isDark ? '#E0E0E0' : '#FFFFFF',
+      color: preferBrighter ? '#FFFFFF' : '#E0E0E0',
       decorations: ['BOLD'],
     },
     // Subtitle - Medium emphasis
     SUBTITLE: {
-      color: isDark ? '#C0C0C0' : '#F0F0F0',
+      color: preferBrighter ? '#F0F0F0' : '#C0C0C0',
       decorations: [],
     },
     // Body - Normal text
     BODY: {
-      color: isDark ? '#D0D0D0' : '#FFFFFF',
+      color: preferBrighter ? '#FFFFFF' : '#D0D0D0',
       decorations: [],
     },
     // Label - Lower emphasis
     LABEL: {
-      color: isDark ? '#A0A0A0' : '#C0C0C0',
+      color: preferBrighter ? '#C0C0C0' : '#A0A0A0',
       decorations: [],
     },
     // Muted - Very low emphasis
     MUTED: {
-      color: isDark ? '#808080' : '#A0A0A0',
+      color: preferBrighter ? '#A0A0A0' : '#808080',
       decorations: [],
     },
     // Link - Use accent color for harmony
@@ -240,7 +244,7 @@ export function generateTheme(baseColor: string, themeName: string = 'Generated 
     },
     // Disabled - Gray, strikethrough
     DISABLED: {
-      color: isDark ? '#606060' : '#808080',
+      color: preferBrighter ? '#808080' : '#606060',
       decorations: ['STRIKETHROUGH'],
     },
   };

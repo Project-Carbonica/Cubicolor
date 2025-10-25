@@ -8,24 +8,21 @@ import MinecraftItemPreview from './components/MinecraftItemPreview';
 
 function App() {
   const [baseColor, setBaseColor] = useState('#6750A4');
-  const [theme, setTheme] = useState<MessageTheme>(() => generateTheme(baseColor, 'My Custom Theme'));
+  const [preferBrighter, setPreferBrighter] = useState(false);
+  const [theme, setTheme] = useState<MessageTheme>(() => generateTheme(baseColor, 'My Custom Theme', false));
   const [themeName, setThemeName] = useState('My Custom Theme');
   const [copied, setCopied] = useState(false);
 
   const handleGenerateTheme = (color: string) => {
     setBaseColor(color);
-    setTheme(generateTheme(color, themeName));
+    setTheme(generateTheme(color, themeName, preferBrighter));
   };
 
-  const handlePreset = (presetName: string) => {
-    const presets = getPresetThemes();
-    setTheme(presets[presetName]);
-    setThemeName(presets[presetName].name);
-    // Update baseColor based on preset's primary color
-    const primaryColor = presets[presetName].messages.PRIMARY?.color;
-    if (primaryColor) {
-      setBaseColor(primaryColor);
-    }
+  const handleBrightnessMode = (mode: 'dark' | 'light') => {
+    const isBright = mode === 'light';
+    setPreferBrighter(isBright);
+    setTheme(generateTheme(baseColor, themeName, isBright));
+    setThemeName(`${themeName.replace(' (Dark)', '').replace(' (Light)', '')} (${mode === 'dark' ? 'Dark' : 'Light'})`);
   };
 
   const handleCopy = async () => {
@@ -63,19 +60,19 @@ function App() {
                 />
 
                 <div>
-                  <label className="block text-xs font-medium mb-2 text-purple-900/70">Presets</label>
+                  <label className="block text-xs font-medium mb-2 text-purple-900/70">Brightness Mode</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => handlePreset('minecraft-dark')}
-                      className="px-3 py-2 bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-xl hover:scale-[1.02] transform transition-all shadow-sm text-xs font-medium"
+                      onClick={() => handleBrightnessMode('dark')}
+                      className={`px-3 py-2 bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-xl hover:scale-[1.02] transform transition-all shadow-sm text-xs font-medium ${!preferBrighter ? 'ring-2 ring-purple-500' : ''}`}
                     >
-                      🌙 MC Dark
+                      🌙 Dark
                     </button>
                     <button
-                      onClick={() => handlePreset('minecraft-light')}
-                      className="px-3 py-2 bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-xl hover:scale-[1.02] transform transition-all shadow-sm text-xs font-medium"
+                      onClick={() => handleBrightnessMode('light')}
+                      className={`px-3 py-2 bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-xl hover:scale-[1.02] transform transition-all shadow-sm text-xs font-medium ${preferBrighter ? 'ring-2 ring-purple-500' : ''}`}
                     >
-                      ☀️ MC Light
+                      ☀️ Light
                     </button>
                   </div>
                 </div>
