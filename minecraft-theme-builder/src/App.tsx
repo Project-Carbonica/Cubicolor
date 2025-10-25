@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageTheme } from './types/theme';
-import { generateTheme, getPresetThemes } from './utils/themeGenerator';
-import { downloadTheme, copyThemeToClipboard, downloadBothThemes } from './utils/themeExporter';
+import { generateTheme } from './utils/themeGenerator';
+import { copyThemeToClipboard, downloadBothThemes } from './utils/themeExporter';
 import ColorPicker from './components/ColorPicker';
 import MinecraftChatPreview from './components/MinecraftChatPreview';
 import MinecraftItemPreview from './components/MinecraftItemPreview';
@@ -91,8 +91,6 @@ function App() {
     setUseAdvancedSettings(true);
     setCurrentStep(3);
   };
-
-  const totalSteps = 4;
 
   // Apply theme to website
   useEffect(() => {
