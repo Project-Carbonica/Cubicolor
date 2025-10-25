@@ -2,6 +2,7 @@
   "name": "minecraft-theme-builder",
   "version": "1.0.0",
   "type": "module",
+  "homepage": "https://project-carbonica.github.io/Cubicolor",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
