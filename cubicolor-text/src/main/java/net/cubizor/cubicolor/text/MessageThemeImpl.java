@@ -1,9 +1,14 @@
 package net.cubizor.cubicolor.text;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
- * Default implementation of MessageTheme
+ * Default implementation of {@link MessageTheme}.
+ * Stores message role to text style mappings for consistent message formatting.
+ * Package-private to enforce creation through MessageThemeBuilder.
  */
 class MessageThemeImpl implements MessageTheme {
 

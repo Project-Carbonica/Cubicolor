@@ -4,7 +4,12 @@ import net.cubizor.cubicolor.api.ColorScheme;
 import net.cubizor.cubicolor.text.MessageTheme;
 import net.cubizor.cubicolor.text.TextTheme;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

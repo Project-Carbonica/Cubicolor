@@ -3,6 +3,11 @@ package net.cubizor.cubicolor.core;
 import net.cubizor.cubicolor.api.Color;
 import net.cubizor.cubicolor.api.ColorFactory;
 
+/**
+ * Default implementation of {@link ColorFactory}.
+ * Provides methods to create Color instances from various formats including
+ * RGB, RGBA, hexadecimal strings, and HSL values.
+ */
 public class ColorFactoryImpl implements ColorFactory {
 
     @Override

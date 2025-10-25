@@ -2,7 +2,9 @@ package net.cubizor.cubicolor.text;
 
 import net.cubizor.cubicolor.api.Color;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a text style with color and decorations.

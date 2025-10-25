@@ -4,9 +4,19 @@ import net.cubizor.cubicolor.api.Color;
 import net.cubizor.cubicolor.api.ColorRole;
 import net.cubizor.cubicolor.api.ColorScheme;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
-public class ColorSchemeImpl implements ColorScheme {
+/**
+ * Default immutable implementation of {@link ColorScheme}.
+ * Stores semantic color role mappings using an EnumMap for efficient lookups.
+ * Package-private to enforce creation through ColorSchemeBuilder.
+ */
+class ColorSchemeImpl implements ColorScheme {
 
     private final String name;
     private final Map<ColorRole, Color> colors;

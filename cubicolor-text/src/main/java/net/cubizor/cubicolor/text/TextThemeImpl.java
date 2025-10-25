@@ -1,7 +1,15 @@
 package net.cubizor.cubicolor.text;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
+/**
+ * Default implementation of {@link TextTheme}.
+ * Stores text styles in a HashMap for flexible key-based lookups.
+ * Package-private to enforce creation through TextThemeBuilder.
+ */
 class TextThemeImpl implements TextTheme {
 
     private final String name;

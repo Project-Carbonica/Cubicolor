@@ -4,7 +4,12 @@ import net.cubizor.cubicolor.api.Color;
 
 import java.util.Objects;
 
-public class ColorImpl implements Color {
+/**
+ * Default immutable implementation of {@link Color}.
+ * Stores RGBA color values with automatic clamping to valid ranges (0-255).
+ * Package-private to enforce creation through ColorFactory.
+ */
+class ColorImpl implements Color {
 
     private final int red;
     private final int green;

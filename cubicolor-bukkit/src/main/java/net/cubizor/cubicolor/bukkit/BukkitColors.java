@@ -3,7 +3,6 @@ package net.cubizor.cubicolor.bukkit;
 import net.cubizor.cubicolor.api.Color;
 import net.cubizor.cubicolor.core.Colors;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 /**

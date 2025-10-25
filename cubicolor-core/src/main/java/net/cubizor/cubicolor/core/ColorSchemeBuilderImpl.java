@@ -9,6 +9,10 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Default implementation of {@link ColorSchemeBuilder}.
+ * Provides a fluent API for building immutable color schemes.
+ */
 public class ColorSchemeBuilderImpl implements ColorSchemeBuilder {
 
     private final String name;
