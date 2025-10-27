@@ -52,7 +52,7 @@ on:
 
 jobs:
   publish:
-    runs-on: self-hosted
+    runs-on: arc-runner-set
 
     steps:
       - name: Download build artifacts

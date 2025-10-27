@@ -24,7 +24,7 @@ on:
 
 jobs:
   release:
-    runs-on: self-hosted
+    runs-on: arc-runner-set
     permissions:
       contents: write
       packages: write
