@@ -1,0 +1,202 @@
+name: Automatic Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version type to release'
+        required: true
+        type: choice
+        options:
+          - auto
+          - major
+          - minor
+          - patch
+      skip_nexus:
+        description: 'Skip Nexus publish'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      version: ${{ steps.create_release.outputs.new_version }}
+      should_skip: ${{ steps.version_type.outputs.type == 'skip' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(./gradlew currentVersion -q | grep "Project version:" | awk '{print $3}')
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Determine version increment type
+        id: version_type
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.version_type }}" >> $GITHUB_OUTPUT
+          else
+            # Commit message analizine göre otomatik belirleme
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+
+            if echo "$COMMIT_MSG" | grep -qE '^feat!:|^fix!:|^refactor!:|BREAKING[ -]CHANGE'; then
+              echo "type=major" >> $GITHUB_OUTPUT
+              echo "Detected BREAKING CHANGE - Major version bump"
+            elif echo "$COMMIT_MSG" | grep -qE '^feat(\(.+\))?:'; then
+              echo "type=minor" >> $GITHUB_OUTPUT
+              echo "Detected feat - Minor version bump"
+            elif echo "$COMMIT_MSG" | grep -qE '^fix(\(.+\))?:|^perf(\(.+\))?:|^refactor(\(.+\))?:'; then
+              echo "type=patch" >> $GITHUB_OUTPUT
+              echo "Detected fix/perf/refactor - Patch version bump"
+            else
+              echo "type=skip" >> $GITHUB_OUTPUT
+              echo "No version bump needed for this commit"
+            fi
+          fi
+
+      - name: Skip release if not needed
+        if: steps.version_type.outputs.type == 'skip'
+        run: |
+          echo "Skipping release - commit type does not require version bump"
+          echo "Use 'feat:', 'fix:', or 'BREAKING CHANGE' in commit message for automatic releases"
+          exit 0
+
+      - name: Run tests
+        if: steps.version_type.outputs.type != 'skip'
+        run: ./gradlew test --no-daemon
+
+      - name: Build project
+        if: steps.version_type.outputs.type != 'skip'
+        run: ./gradlew build --no-daemon
+
+      - name: Create release
+        if: steps.version_type.outputs.type != 'skip'
+        id: create_release
+        run: |
+          VERSION_TYPE=${{ steps.version_type.outputs.type }}
+
+          if [ "$VERSION_TYPE" = "auto" ]; then
+            ./gradlew release -Prelease.disableChecks
+          elif [ "$VERSION_TYPE" = "major" ]; then
+            ./gradlew release -Prelease.versionIncrementer=incrementMajor -Prelease.disableChecks
+          elif [ "$VERSION_TYPE" = "minor" ]; then
+            ./gradlew release -Prelease.versionIncrementer=incrementMinor -Prelease.disableChecks
+          elif [ "$VERSION_TYPE" = "patch" ]; then
+            ./gradlew release -Prelease.versionIncrementer=incrementPatch -Prelease.disableChecks
+          fi
+
+          NEW_VERSION=$(./gradlew currentVersion -q | grep "Project version:" | awk '{print $3}')
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Released version: $NEW_VERSION"
+
+      - name: Push tags
+        if: steps.version_type.outputs.type != 'skip'
+        run: |
+          git push --tags
+
+      - name: Upload artifacts
+        if: steps.version_type.outputs.type != 'skip'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cubicolor-${{ steps.create_release.outputs.new_version }}
+          path: |
+            **/build/libs/*.jar
+            !**/build/libs/*-plain.jar
+          retention-days: 90
+
+      - name: Generate changelog
+        if: steps.version_type.outputs.type != 'skip'
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          CURRENT_TAG="v${{ steps.create_release.outputs.new_version }}"
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $CURRENT_TAG)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..$CURRENT_TAG)
+          fi
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.version_type.outputs.type != 'skip'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.create_release.outputs.new_version }}
+          release_name: Release v${{ steps.create_release.outputs.new_version }}
+          body: |
+            ## What's Changed
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Maven Coordinates
+
+            All modules have been published to Nexus:
+
+            ```xml
+            <dependency>
+              <groupId>net.cubizor.cubicolor</groupId>
+              <artifactId>cubicolor-core</artifactId>
+              <version>${{ steps.create_release.outputs.new_version }}</version>
+            </dependency>
+            ```
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/commits/v${{ steps.create_release.outputs.new_version }}
+          draft: false
+          prerelease: false
+
+  # Nexus publish - ayrı workflow olarak modüler
+  nexus-publish:
+    needs: release
+    if: needs.release.outputs.should_skip != 'true' && inputs.skip_nexus != true
+    uses: ./.github/workflows/nexus-publish.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+      artifactName: cubicolor-${{ needs.release.outputs.version }}
+      groupId: net.cubizor.cubicolor
+      projectName: Cubicolor
+      projectDescription: A modular color and typography theming library for Java applications
+      projectUrl: https://github.com/Project-Carbonica/Cubicolor/
+      licenseName: MIT License
+      licenseUrl: https://opensource.org/licenses/MIT
+    secrets:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      NEXUS_RELEASE_URL: ${{ secrets.NEXUS_RELEASE_URL }}
+      NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_SNAPSHOT_URL }}

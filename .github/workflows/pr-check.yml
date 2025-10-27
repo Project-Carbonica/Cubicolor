@@ -1,0 +1,95 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Validate commit messages
+        run: |
+          echo "Checking commit messages for Conventional Commits format..."
+
+          COMMITS=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s")
+          VALID=true
+
+          while IFS= read -r commit; do
+            if ! echo "$commit" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?(!)?:|^(feat|fix|refactor)!:|BREAKING CHANGE:'; then
+              echo "Invalid commit message: $commit"
+              echo "Expected format: type(scope): description"
+              echo "Valid types: feat, fix, docs, style, refactor, perf, test, chore, build, ci"
+              VALID=false
+            fi
+          done <<< "$COMMITS"
+
+          if [ "$VALID" = false ]; then
+            echo ""
+            echo "Please use Conventional Commits format for your commit messages."
+            echo "Examples:"
+            echo "  feat: add new color gradient feature"
+            echo "  fix: resolve null pointer in color parser"
+            echo "  feat!: change API method signatures (BREAKING CHANGE)"
+            exit 1
+          fi
+
+          echo "All commit messages are valid!"
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: Build project
+        run: ./gradlew build --no-daemon
+
+      - name: Check code style
+        run: ./gradlew check --no-daemon
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            const testResults = '${{ job.status }}';
+
+            let comment = '## PR Check Results\n\n';
+
+            if (testResults === 'success') {
+              comment += '✅ All checks passed!\n\n';
+              comment += '- Commit messages follow Conventional Commits format\n';
+              comment += '- All tests passed\n';
+              comment += '- Build successful\n\n';
+              comment += 'This PR is ready to be merged. Once merged to main, the release workflow will automatically:\n';
+              comment += '- Determine version bump based on commit messages\n';
+              comment += '- Create a new release\n';
+              comment += '- Tag the release\n';
+              comment += '- Generate changelog\n';
+            } else {
+              comment += '❌ Some checks failed. Please review the errors above.\n';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

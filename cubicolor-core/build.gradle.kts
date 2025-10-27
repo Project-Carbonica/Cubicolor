@@ -3,7 +3,6 @@ plugins {
 }
 
 group = "net.cubizor.cubicolor"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()

@@ -1,6 +1,13 @@
 # Cubicolor
 
+[![Automatic Release](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/release.yml)
+[![PR Check](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/pr-check.yml/badge.svg)](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/pr-check.yml)
+[![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/Cubicolor?label=version)](https://github.com/YOUR_USERNAME/Cubicolor/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A modular color and typography theming library for Java applications.
+
+> **Note:** This project uses **automatic versioning and Nexus deployment** via GitHub Actions running on self-hosted runners (GitHub ARC). See [VERSIONING.md](VERSIONING.md) for details.
 
 ## Overview
 
@@ -26,18 +33,46 @@ Cubicolor provides a semantic, platform-agnostic approach to managing colors and
 
 ## Installation
 
+All modules are automatically published to Nexus on every release.
+
 ### Gradle (Kotlin DSL)
 
 ```kotlin
+repositories {
+    maven {
+        url = uri("https://nexus.example.com/repository/maven-releases/")
+        // Credentials if needed
+    }
+}
+
 dependencies {
-    implementation("net.cubizor.cubicolor:cubicolor-core:1.0-SNAPSHOT")
+    implementation("net.cubizor.cubicolor:cubicolor-core:1.0.0")
 
     // Optional: For text styling
-    implementation("net.cubizor.cubicolor:cubicolor-text:1.0-SNAPSHOT")
+    implementation("net.cubizor.cubicolor:cubicolor-text:1.0.0")
 
     // Optional: For Bukkit/Minecraft
-    implementation("net.cubizor.cubicolor:cubicolor-bukkit:1.0-SNAPSHOT")
+    implementation("net.cubizor.cubicolor:cubicolor-bukkit:1.0.0")
 }
+```
+
+### Maven
+
+```xml
+<repositories>
+    <repository>
+        <id>nexus</id>
+        <url>https://nexus.example.com/repository/maven-releases/</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>net.cubizor.cubicolor</groupId>
+        <artifactId>cubicolor-core</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+</dependencies>
 ```
 
 ## Usage Examples
