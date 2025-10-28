@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
 group = "net.cubizor.cubicolor"
@@ -13,16 +14,12 @@ dependencies {
     implementation(project(":cubicolor-api"))
     implementation(project(":cubicolor-core"))
     implementation(project(":cubicolor-text"))
+    implementation(project(":cubicolor-manager"))
 
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 
 java {
     toolchain {
