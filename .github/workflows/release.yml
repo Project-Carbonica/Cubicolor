@@ -154,12 +154,10 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.version_type.outputs.type != 'skip'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.create_release.outputs.new_version }}
-          release_name: Release v${{ steps.create_release.outputs.new_version }}
+          name: Release v${{ steps.create_release.outputs.new_version }}
           body: |
             ## What's Changed
 
@@ -180,6 +178,7 @@ jobs:
             **Full Changelog**: https://github.com/${{ github.repository }}/commits/v${{ steps.create_release.outputs.new_version }}
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   # Nexus publish - ayrı workflow olarak modüler
   nexus-publish:
