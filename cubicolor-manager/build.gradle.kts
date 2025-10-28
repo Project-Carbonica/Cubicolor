@@ -1,0 +1,28 @@
+plugins {
+    id("java")
+}
+
+group = "net.cubizor.cubicolor"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":cubicolor-api"))
+    implementation(project(":cubicolor-core"))
+
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
