@@ -186,15 +186,16 @@ jobs:
             # Upload JAR
             echo "   📤 Uploading JAR..."
 
-            # Create temporary file for curl output
+            # Create temporary files for curl output
             CURL_OUTPUT=$(mktemp)
+            CURL_VERBOSE=$(mktemp)
 
-            # Perform upload with detailed output
-            HTTP_CODE=$(curl -w "%{http_code}" -o "$CURL_OUTPUT" \
+            # Perform upload with detailed output and verbose logging
+            HTTP_CODE=$(curl -w "%{http_code}" -o "$CURL_OUTPUT" -v \
               -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
               --upload-file "${JAR_PATH}" \
               -H "Content-Type: application/java-archive" \
-              "${JAR_UPLOAD_URL}" 2>&1 | tail -n1)
+              "${JAR_UPLOAD_URL}" 2>"$CURL_VERBOSE" | tail -n1)
 
             CURL_EXIT_CODE=$?
 
@@ -202,18 +203,24 @@ jobs:
             echo "      - Curl exit code: ${CURL_EXIT_CODE}"
             echo "      - HTTP status: ${HTTP_CODE}"
             echo "      - URL: ${JAR_UPLOAD_URL}"
+            echo "      - Username: ${NEXUS_USERNAME}"
+            echo "      - Password length: ${#NEXUS_PASSWORD}"
 
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "   ✅ JAR uploaded successfully (HTTP ${HTTP_CODE})"
             else
               echo "   ❌ JAR upload failed (HTTP ${HTTP_CODE})"
+              echo ""
               echo "   📄 Response body:"
-              cat "$CURL_OUTPUT" | head -20
-              rm -f "$CURL_OUTPUT"
+              cat "$CURL_OUTPUT"
+              echo ""
+              echo "   🔍 Curl verbose output (last 30 lines):"
+              tail -30 "$CURL_VERBOSE"
+              rm -f "$CURL_OUTPUT" "$CURL_VERBOSE"
               exit 1
             fi
 
-            rm -f "$CURL_OUTPUT"
+            rm -f "$CURL_OUTPUT" "$CURL_VERBOSE"
 
             # Generate and upload POM
             local POM_PATH="/tmp/${ARTIFACT_ID}-${USE_VERSION}.pom"
