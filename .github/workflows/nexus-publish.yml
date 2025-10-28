@@ -208,35 +208,64 @@ jobs:
 
             # Upload JAR
             echo "   📤 Uploading JAR..."
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+
+            # Create temporary file for curl output
+            CURL_OUTPUT=$(mktemp)
+
+            # Perform upload with detailed output
+            HTTP_CODE=$(curl -w "%{http_code}" -o "$CURL_OUTPUT" \
               -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
               --upload-file "${JAR_PATH}" \
-              "${JAR_UPLOAD_URL}")
+              -H "Content-Type: application/java-archive" \
+              "${JAR_UPLOAD_URL}" 2>&1 | tail -n1)
+
+            CURL_EXIT_CODE=$?
+
+            echo "   🔍 Debug Info:"
+            echo "      - Curl exit code: ${CURL_EXIT_CODE}"
+            echo "      - HTTP status: ${HTTP_CODE}"
+            echo "      - URL: ${JAR_UPLOAD_URL}"
 
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "   ✅ JAR uploaded successfully (HTTP ${HTTP_CODE})"
             else
               echo "   ❌ JAR upload failed (HTTP ${HTTP_CODE})"
+              echo "   📄 Response body:"
+              cat "$CURL_OUTPUT" | head -20
+              rm -f "$CURL_OUTPUT"
               exit 1
             fi
+
+            rm -f "$CURL_OUTPUT"
 
             # Generate and upload POM
             local POM_PATH="/tmp/${ARTIFACT_ID}-${USE_VERSION}.pom"
             generate_pom "$ARTIFACT_ID" "$POM_PATH" "$USE_VERSION"
 
             echo "   📤 Uploading POM..."
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+
+            # Create temporary file for curl output
+            local POM_CURL_OUTPUT=$(mktemp)
+
+            HTTP_CODE=$(curl -w "%{http_code}" -o "$POM_CURL_OUTPUT" \
               -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
               --upload-file "${POM_PATH}" \
-              "${POM_UPLOAD_URL}")
+              -H "Content-Type: application/xml" \
+              "${POM_UPLOAD_URL}" 2>&1 | tail -n1)
+
+            POM_CURL_EXIT_CODE=$?
 
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "   ✅ POM uploaded successfully (HTTP ${HTTP_CODE})"
             else
-              echo "   ⚠️  POM upload warning (HTTP ${HTTP_CODE})"
+              echo "   ⚠️  POM upload warning (HTTP ${HTTP_CODE}, curl exit: ${POM_CURL_EXIT_CODE})"
+              if [ -f "$POM_CURL_OUTPUT" ]; then
+                echo "   📄 Response:"
+                cat "$POM_CURL_OUTPUT" | head -10
+              fi
             fi
 
-            rm -f "$POM_PATH"
+            rm -f "$POM_PATH" "$POM_CURL_OUTPUT"
           }
 
           # Find and upload all JARs
