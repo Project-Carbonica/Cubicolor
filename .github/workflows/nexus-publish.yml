@@ -94,10 +94,8 @@ jobs:
             echo "📍 Publishing RELEASE version to: ${REPO_URL}"
           fi
 
-          # Ensure REPO_URL ends with a slash
-          if [[ ! "$REPO_URL" =~ /$ ]]; then
-            REPO_URL="${REPO_URL}/"
-          fi
+          # Ensure REPO_URL ends with a slash (remove any existing trailing slash first, then add one)
+          REPO_URL="${REPO_URL%/}/"
 
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🚀 Nexus Publish Configuration"
@@ -190,10 +188,8 @@ jobs:
               UPLOAD_REPO_URL="${NEXUS_RELEASE_URL}"
             fi
 
-            # Ensure URL ends with slash
-            if [[ ! "$UPLOAD_REPO_URL" =~ /$ ]]; then
-              UPLOAD_REPO_URL="${UPLOAD_REPO_URL}/"
-            fi
+            # Ensure URL ends with slash (remove any existing trailing slash first, then add one)
+            UPLOAD_REPO_URL="${UPLOAD_REPO_URL%/}/"
 
             # Maven path structure
             local MAVEN_BASE="${GROUP_PATH}/${ARTIFACT_ID}/${USE_VERSION}"
