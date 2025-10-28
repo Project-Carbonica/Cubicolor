@@ -21,6 +21,11 @@ on:
         required: false
         type: boolean
         default: false
+      modules:
+        description: 'Modules to publish (comma-separated, e.g., cubicolor-core,cubicolor-theme). Leave empty for all modules.'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   release:
@@ -194,6 +199,7 @@ jobs:
       projectUrl: https://github.com/Project-Carbonica/Cubicolor/
       licenseName: MIT License
       licenseUrl: https://opensource.org/licenses/MIT
+      modules: ${{ inputs.modules }}
     secrets:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}

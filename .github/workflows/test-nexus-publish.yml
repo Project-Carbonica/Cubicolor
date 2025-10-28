@@ -2,6 +2,12 @@ name: Test Nexus Publish
 
 on:
   workflow_dispatch:
+    inputs:
+      modules:
+        description: 'Modules to publish (comma-separated, e.g., cubicolor-core,cubicolor-theme). Leave empty for all modules.'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   build-and-test:
@@ -54,6 +60,7 @@ jobs:
           PROJECT_URL: https://github.com/Project-Carbonica/Cubicolor/
           LICENSE_NAME: MIT License
           LICENSE_URL: https://opensource.org/licenses/MIT
+          MODULES: ${{ inputs.modules }}
         run: |
           set -e
 
@@ -76,6 +83,11 @@ jobs:
           echo "📦 Group ID: ${GROUP_ID}"
           echo "🏷️  Version: ${VERSION}"
           echo "📍 Repository: ${REPO_URL}"
+          if [ -n "$MODULES" ]; then
+            echo "🎯 Selected Modules: ${MODULES}"
+          else
+            echo "🎯 Publishing: All modules"
+          fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
 
@@ -213,9 +225,38 @@ jobs:
           echo ""
 
           UPLOADED=0
+          SKIPPED=0
+
+          # Helper function to check if module should be processed
+          should_upload() {
+            local ARTIFACT_ID=$1
+
+            if [ -z "$MODULES" ]; then
+              return 0  # Upload all if no filter
+            fi
+
+            IFS=',' read -ra MODULE_ARRAY <<< "$MODULES"
+            for module in "${MODULE_ARRAY[@]}"; do
+              module=$(echo "$module" | xargs)
+              if [ "$module" = "$ARTIFACT_ID" ]; then
+                return 0  # Found in list
+              fi
+            done
+
+            return 1  # Not found in list
+          }
+
           while IFS= read -r jar_file; do
-            upload_artifact "$jar_file"
-            UPLOADED=$((UPLOADED + 1))
+            JAR_FILENAME=$(basename "$jar_file")
+            ARTIFACT_ID=$(echo "$JAR_FILENAME" | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?\.jar$//')
+
+            if should_upload "$ARTIFACT_ID"; then
+              upload_artifact "$jar_file"
+              UPLOADED=$((UPLOADED + 1))
+            else
+              echo "⏭️  Skipping module (not selected): $ARTIFACT_ID"
+              SKIPPED=$((SKIPPED + 1))
+            fi
           done < <(find artifacts -type f -name "*.jar" | grep -v -- '-plain.jar')
 
           echo ""
@@ -223,6 +264,9 @@ jobs:
           echo "✨ Test Publishing Complete!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "📦 Total artifacts tested: ${UPLOADED}"
+          if [ "$SKIPPED" -gt 0 ]; then
+            echo "⏭️  Artifacts skipped: ${SKIPPED}"
+          fi
           echo "📍 Repository: ${REPO_URL}"
           echo "🏷️  Version: ${VERSION}"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
