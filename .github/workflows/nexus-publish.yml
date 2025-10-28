@@ -94,6 +94,11 @@ jobs:
             echo "📍 Publishing RELEASE version to: ${REPO_URL}"
           fi
 
+          # Ensure REPO_URL ends with a slash
+          if [[ ! "$REPO_URL" =~ /$ ]]; then
+            REPO_URL="${REPO_URL}/"
+          fi
+
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🚀 Nexus Publish Configuration"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
