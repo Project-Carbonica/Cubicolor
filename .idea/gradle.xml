@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/cubicolor-bukkit" />
             <option value="$PROJECT_DIR$/cubicolor-core" />
             <option value="$PROJECT_DIR$/cubicolor-exporter" />
+            <option value="$PROJECT_DIR$/cubicolor-manager" />
             <option value="$PROJECT_DIR$/cubicolor-text" />
           </set>
         </option>

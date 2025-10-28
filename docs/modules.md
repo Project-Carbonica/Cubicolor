@@ -70,16 +70,22 @@ JSON import/export for themes.
 ---
 
 ## cubicolor-manager
-Multi-plugin ColorScheme management system.
+Namespace-based ColorScheme management system.
 
 **What it includes:**
-- `ColorSchemeProvider` - Singleton provider
-- `ColorSchemes` - Static utility for resolving schemes
-- `ColorSchemeResolver` - Interface for master plugin
+- `ColorSchemeProvider` - Singleton provider with namespace support
+- `ColorSchemes` - Static utility for resolving schemes by namespace
+- `ColorSchemeResolver` - Interface for plugin resolvers
 - `ColorSchemeContext` - Context wrapper
 
-**Purpose:** Allows multiple Minecraft plugins to share user ColorScheme preferences. One master plugin (e.g., "profile") manages preferences in database, while other plugins just consume them.
+**Purpose:** Allows multiple plugins to independently manage their own ColorSchemes using namespaces. Each plugin registers its own namespace (e.g., "profile", "chat", "scoreboard"). Profile plugin typically manages dark/light preference, while other plugins read this preference and apply their own themes.
 
-**Usage:** Include this in multi-plugin Minecraft servers.
+**Usage:** Include this in multi-plugin environments where each plugin needs independent ColorScheme management.
 
-See [manager.md](manager.md) for detailed usage.
+See [manager.md](manager.md) for detailed usage and examples.
+
+**Architecture:**
+- Profile plugin → manages dark/light (namespace: "profile")
+- Chat plugin → manages rainbow/neon/pastel (namespace: "chat")
+- Scoreboard plugin → manages minimal/detailed (namespace: "scoreboard")
+- All plugins read User.isDarkMode() for dark/light preference

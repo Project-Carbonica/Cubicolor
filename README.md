@@ -67,13 +67,21 @@ player.sendMessage(msg);
 ### Multi-Plugin Management
 
 ```java
-// Master plugin (Profile)
-ColorSchemeProvider.getInstance().registerMaster("profile", ctx ->
-    database.getPlayerColorScheme((UUID) ctx)
+// Profile plugin - manages dark/light
+ColorSchemeProvider.getInstance().register("profile", ctx ->
+    user.isDarkMode() ? ProfileThemes.DARK : ProfileThemes.LIGHT
 );
 
-// Consumer plugins (Essentials, Depo, etc.)
-ColorScheme scheme = ColorSchemes.of(player);
+// Chat plugin - manages its own themes
+ColorSchemeProvider.getInstance().register("chat", ctx -> {
+    boolean isDark = user.isDarkMode(); // Read from profile
+    String theme = user.getChatTheme();
+    return ChatThemes.get(theme, isDark);
+});
+
+// Get schemes from different namespaces
+ColorScheme profileScheme = ColorSchemes.of(player, "profile");
+ColorScheme chatScheme = ColorSchemes.of(player, "chat");
 ```
 
 ## Documentation

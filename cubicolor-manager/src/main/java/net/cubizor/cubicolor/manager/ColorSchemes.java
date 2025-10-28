@@ -3,43 +3,69 @@ package net.cubizor.cubicolor.manager;
 import net.cubizor.cubicolor.api.ColorScheme;
 
 /**
- * Utility class for context-based ColorScheme resolution.
+ * Utility class for namespace-based ColorScheme resolution.
  *
- * <p>This class provides a convenient way to retrieve ColorSchemes
- * from various context objects across different modules and applications.
+ * <p>This class provides convenient static methods to retrieve ColorSchemes
+ * from various context objects within specific plugin namespaces.
  *
- * <p><b>Usage in any module:</b>
+ * <p><b>Design Pattern:</b>
+ * <ul>
+ *   <li>Profile plugin manages dark/light preference and saves to User object</li>
+ *   <li>Other plugins read User.isDarkMode() and apply their own themes</li>
+ *   <li>Each plugin has its own namespace and completely independent ColorSchemes</li>
+ * </ul>
+ *
+ * <p><b>Architecture Example:</b>
+ * <pre>
+ * Profile Plugin (namespace: "profile")
+ *   → Manages: DARK, LIGHT
+ *   → Saves: User.setDarkMode(true/false)
+ *
+ * Chat Plugin (namespace: "chat")
+ *   → Reads: User.isDarkMode()
+ *   → Manages: RAINBOW_DARK, RAINBOW_LIGHT, NEON_DARK, NEON_LIGHT, etc.
+ *
+ * Scoreboard Plugin (namespace: "scoreboard")
+ *   → Reads: User.isDarkMode()
+ *   → Manages: MINIMAL_DARK, MINIMAL_LIGHT, DETAILED_DARK, DETAILED_LIGHT, etc.
+ * </pre>
+ *
+ * <p><b>Usage - Profile Plugin:</b>
  * <pre>{@code
- * // From a user object
- * ColorScheme scheme = ColorSchemes.of(user);
- *
- * // From a UUID
- * ColorScheme scheme = ColorSchemes.of(userId);
- *
- * // From any context
- * ColorScheme scheme = ColorSchemes.of(context);
- * }</pre>
- *
- * <p><b>With Primary Source (Database):</b>
- * The primary source module (typically user profile) registers a resolver:
- * <pre>{@code
- * ColorSchemeProvider.getInstance().registerPrimary("profile", context -> {
- *     UUID userId = extractUserId(context);
- *     return database.getUserColorScheme(userId);
+ * // Register resolver
+ * ColorSchemeProvider.getInstance().register("profile", context -> {
+ *     User user = getUser(context);
+ *     return user.isDarkMode() ? ProfileThemes.DARK : ProfileThemes.LIGHT;
  * });
+ *
+ * // Get profile scheme
+ * ColorScheme scheme = ColorSchemes.of(player, "profile");
  * }</pre>
  *
- * <p><b>Without Primary Source (In-Memory):</b>
- * If no primary source is registered, the provider uses in-memory storage:
+ * <p><b>Usage - Chat Plugin:</b>
  * <pre>{@code
- * // Set default for all users
+ * // Register resolver (reads dark/light from User, applies own themes)
+ * ColorSchemeProvider.getInstance().register("chat", context -> {
+ *     User user = getUser(context);
+ *     boolean isDark = user.isDarkMode(); // Read from profile
+ *     String theme = user.getChatTheme(); // Own setting
+ *     return ChatThemes.get(theme, isDark); // rainbow-dark, neon-light, etc.
+ * });
+ *
+ * // Get chat scheme
+ * ColorScheme scheme = ColorSchemes.of(player, "chat");
+ * }</pre>
+ *
+ * <p><b>Without Resolver (In-Memory):</b>
+ * <pre>{@code
+ * // Set default for all contexts
  * ColorSchemeProvider.getInstance().setDefaultColorScheme(darkTheme);
  *
- * // Set for specific user
- * ColorSchemeProvider.getInstance().setColorScheme(userId, customTheme);
+ * // Set for specific context in namespace
+ * ColorSchemeProvider.getInstance().setColorScheme(userId, customTheme, "chat");
  *
- * // Resolve (uses in-memory or default)
- * ColorScheme scheme = ColorSchemes.of(userId);
+ * // Resolve
+ * ColorScheme scheme = ColorSchemes.of(userId, "chat");
  * }</pre>
  */
 public final class ColorSchemes {
@@ -49,16 +75,16 @@ public final class ColorSchemes {
     }
 
     /**
-     * Resolves a ColorScheme from any context object.
+     * Resolves a ColorScheme from a context object within a specific namespace.
      *
      * <p>Resolution priority:
      * <ol>
-     *   <li>Primary source resolver (if registered)</li>
-     *   <li>In-memory storage (if set for context)</li>
-     *   <li>Default ColorScheme</li>
+     *   <li>Namespace-specific resolver (if registered)</li>
+     *   <li>In-memory storage for that namespace (if set)</li>
+     *   <li>Global default ColorScheme</li>
      * </ol>
      *
-     * <p>The context can be:
+     * <p>Example contexts:
      * <ul>
      *   <li>Minecraft: Player object, UUID, player name</li>
      *   <li>Web: User ID, session ID, username</li>
@@ -67,56 +93,46 @@ public final class ColorSchemes {
      * </ul>
      *
      * @param context the context to resolve from
+     * @param namespace the namespace to resolve within (e.g., "profile", "chat", "scoreboard")
      * @return the resolved ColorScheme (never null)
-     * @throws IllegalArgumentException if the context is null or cannot be resolved
+     * @throws IllegalArgumentException if context or namespace is null
      */
-    public static ColorScheme of(Object context) {
-        return ColorSchemeProvider.getInstance().resolve(context);
+    public static ColorScheme of(Object context, String namespace) {
+        return ColorSchemeProvider.getInstance().resolve(context, namespace);
     }
 
     /**
-     * Resolves a ColorScheme from a ColorSchemeContext.
+     * Resolves a ColorScheme from a ColorSchemeContext within a specific namespace.
      *
      * @param context the ColorSchemeContext
+     * @param namespace the namespace to resolve within
      * @param <T> the type of the context object
      * @return the resolved ColorScheme (never null)
-     * @throws IllegalArgumentException if the context cannot be resolved
+     * @throws IllegalArgumentException if context or namespace is null
      */
-    public static <T> ColorScheme of(ColorSchemeContext<T> context) {
-        return ColorSchemeProvider.getInstance().resolve(context.getContext());
+    public static <T> ColorScheme of(ColorSchemeContext<T> context, String namespace) {
+        if (context == null) {
+            throw new IllegalArgumentException("Context cannot be null");
+        }
+        return ColorSchemeProvider.getInstance().resolve(context.getContext(), namespace);
     }
 
     /**
-     * Checks if a primary source has been registered.
+     * Checks if a resolver is registered for a specific namespace.
      *
-     * @return true if a primary source is registered, false if using in-memory fallback
+     * @param namespace the namespace to check
+     * @return true if a resolver is registered, false otherwise
      */
-    public static boolean isPrimaryRegistered() {
-        return ColorSchemeProvider.getInstance().isPrimaryRegistered();
+    public static boolean isRegistered(String namespace) {
+        return ColorSchemeProvider.getInstance().isRegistered(namespace);
     }
 
     /**
-     * @deprecated Use {@link #isPrimaryRegistered()} instead.
-     */
-    @Deprecated
-    public static boolean isAvailable() {
-        return true; // Always available with in-memory fallback
-    }
-
-    /**
-     * Gets the name of the primary source managing ColorScheme resolution.
+     * Gets all registered namespaces.
      *
-     * @return the primary source name, or null if using in-memory storage
+     * @return set of registered namespace names
      */
-    public static String getPrimarySource() {
-        return ColorSchemeProvider.getInstance().getPrimarySourceName();
-    }
-
-    /**
-     * @deprecated Use {@link #getPrimarySource()} instead.
-     */
-    @Deprecated
-    public static String getMasterPlugin() {
-        return getPrimarySource();
+    public static java.util.Set<String> getRegisteredNamespaces() {
+        return ColorSchemeProvider.getInstance().getRegisteredNamespaces();
     }
 }
