@@ -70,8 +70,44 @@ import net.cubizor.cubicolor.api.ColorScheme;
  */
 public final class ColorSchemes {
 
+    /**
+     * Default namespace used when no namespace is specified.
+     */
+    public static final String DEFAULT_NAMESPACE = "default";
+
     private ColorSchemes() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+
+    /**
+     * Resolves a ColorScheme from a context object using the default namespace.
+     *
+     * <p>This is a convenience method that uses the {@link #DEFAULT_NAMESPACE}.
+     * It's useful when you have a single theme system and don't need multiple namespaces.
+     *
+     * <p><b>Usage:</b>
+     * <pre>{@code
+     * // Register default theme with automatic dark/light selection
+     * ColorSchemeProvider.getInstance().register(ColorSchemes.DEFAULT_NAMESPACE,
+     *     DarkModeAwareResolver.of(
+     *         MyThemes.DARK,
+     *         MyThemes.LIGHT,
+     *         ctx -> getUser(ctx).isDarkMode()
+     *     )
+     * );
+     *
+     * // Use without specifying namespace
+     * ColorScheme scheme = ColorSchemes.of(player);
+     * }</pre>
+     *
+     * @param context the context to resolve from
+     * @return the resolved ColorScheme (never null)
+     * @throws IllegalArgumentException if context is null
+     * @see #of(Object, String)
+     * @see #DEFAULT_NAMESPACE
+     */
+    public static ColorScheme of(Object context) {
+        return ColorSchemeProvider.getInstance().resolve(context, DEFAULT_NAMESPACE);
     }
 
     /**

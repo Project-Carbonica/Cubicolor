@@ -10,6 +10,15 @@ Allows multiple modules to independently manage their own ColorSchemes:
 - **Other plugins read dark/light from User** and apply their own themes
 - **Completely independent** - no namespace conflicts
 - **In-memory fallback** when no resolver is registered
+- **Automatic dark/light selection** with `DarkModeAwareResolver` - no manual `isDark` checks needed!
+
+## Key Benefits
+
+✅ **No manual `isDark` checks** - `DarkModeAwareResolver` handles it automatically
+✅ **No namespace repetition** - `NamespacedColorSchemes` eliminates `"namespace"` strings everywhere
+✅ **Super simple API** - Just `COLORS.of(player)` - that's it!
+✅ **Type-safe** - No boolean parameters or string constants to mix up
+✅ **Clean code** - One static field, one line to use: `COLORS.of(player)`
 
 ## Architecture
 
@@ -22,15 +31,49 @@ User Object
   → isDarkMode(): boolean
 
 Chat Plugin (namespace: "chat")
-  → Reads: User.isDarkMode()
+  → Uses: DarkModeAwareResolver (automatic dark/light selection)
   → Manages: RAINBOW_DARK, RAINBOW_LIGHT, NEON_DARK, NEON_LIGHT, etc.
 
 Scoreboard Plugin (namespace: "scoreboard")
-  → Reads: User.isDarkMode()
+  → Uses: DarkModeAwareResolver (automatic dark/light selection)
   → Manages: MINIMAL_DARK, MINIMAL_LIGHT, DETAILED_DARK, DETAILED_LIGHT, etc.
 ```
 
 ## Quick Start
+
+### Simple Usage (Recommended)
+
+The easiest way - use `NamespacedColorSchemes` to avoid repeating namespace:
+
+```java
+import net.cubizor.cubicolor.manager.*;
+
+public class MyPlugin extends JavaPlugin {
+    // 1. Create a namespace-bound instance (do this once per plugin)
+    private static final NamespacedColorSchemes COLORS =
+        NamespacedColorSchemes.forNamespace("myplugin");
+
+    @Override
+    public void onEnable() {
+        // 2. Register your themes with automatic dark/light selection
+        ColorSchemeProvider.getInstance().register("myplugin",
+            DarkModeAwareResolver.of(
+                MyThemes.DARK,
+                MyThemes.LIGHT,
+                ctx -> getUser(ctx).isDarkMode()
+            )
+        );
+    }
+
+    // 3. Use anywhere in your plugin - no namespace, no isDark checks!
+    public void sendMessage(Player player) {
+        ColorScheme scheme = COLORS.of(player);  // ✅ That's it!
+        // ... use scheme
+    }
+}
+```
+
+**That's it!** No namespace to specify, no isDark checks, just `COLORS.of(player)`!
 
 ### Profile Plugin (Dark/Light Manager)
 
@@ -39,57 +82,98 @@ Profile plugin manages only dark/light preference:
 ```java
 import net.cubizor.cubicolor.manager.*;
 
-// Register profile namespace
-ColorSchemeProvider.getInstance().register("profile", context -> {
-    User user = getUser(context);
-    // Profile manages only dark/light
-    return user.isDarkMode() ? ProfileThemes.DARK : ProfileThemes.LIGHT;
-});
+public class ProfilePlugin extends JavaPlugin {
+    // Namespace-bound instance
+    private static final NamespacedColorSchemes COLORS =
+        NamespacedColorSchemes.forNamespace("profile");
 
-// Use profile scheme
-ColorScheme profileScheme = ColorSchemes.of(player, "profile");
+    @Override
+    public void onEnable() {
+        // Register with automatic dark/light selection
+        ColorSchemeProvider.getInstance().register("profile",
+            DarkModeAwareResolver.of(
+                ProfileThemes.DARK,
+                ProfileThemes.LIGHT,
+                ctx -> getUser(ctx).isDarkMode()
+            )
+        );
+    }
+
+    // Use anywhere - no namespace needed!
+    public void updateProfile(Player player) {
+        ColorScheme scheme = COLORS.of(player);
+        // ... use scheme
+    }
+}
 ```
 
 ### Chat Plugin (Own Themes + Dark/Light)
 
-Chat plugin reads dark/light from User and applies its own themes:
-
+**Before (Manual isDark checks everywhere):**
 ```java
-// Register chat namespace
+// ❌ Old way
 ColorSchemeProvider.getInstance().register("chat", context -> {
-    User user = getUser(context);
-
-    // Read dark/light preference from User (set by profile)
-    boolean isDark = user.isDarkMode();
-
-    // Apply chat's own theme
-    String theme = user.getChatTheme(); // "rainbow", "neon", "pastel"
-    return ChatThemes.get(theme, isDark); // rainbow-dark, neon-light, etc.
+    boolean isDark = getUser(context).isDarkMode();  // Manual check
+    return isDark ? ChatThemes.DARK : ChatThemes.LIGHT;
 });
 
-// Use chat scheme
+// ❌ Had to specify namespace every time
 ColorScheme chatScheme = ColorSchemes.of(player, "chat");
+```
+
+**After (Clean and automatic!):**
+```java
+public class ChatPlugin extends JavaPlugin {
+    // ✅ Namespace-bound instance
+    private static final NamespacedColorSchemes COLORS =
+        NamespacedColorSchemes.forNamespace("chat");
+
+    @Override
+    public void onEnable() {
+        // ✅ Register once with automatic dark/light
+        ColorSchemeProvider.getInstance().register("chat",
+            DarkModeAwareResolver.of(
+                ChatThemes.DARK,
+                ChatThemes.LIGHT,
+                ctx -> getUser(ctx).isDarkMode()
+            )
+        );
+    }
+
+    // ✅ Use anywhere - super clean!
+    public void sendChatMessage(Player player, String message) {
+        ColorScheme scheme = COLORS.of(player);  // That's it!
+        // ... use scheme
+    }
+}
 ```
 
 ### Scoreboard Plugin (Own Styles + Dark/Light)
 
-Scoreboard plugin does the same pattern:
-
 ```java
-// Register scoreboard namespace
-ColorSchemeProvider.getInstance().register("scoreboard", context -> {
-    User user = getUser(context);
+public class ScoreboardPlugin extends JavaPlugin {
+    // ✅ Namespace-bound instance
+    private static final NamespacedColorSchemes COLORS =
+        NamespacedColorSchemes.forNamespace("scoreboard");
 
-    // Read dark/light from User
-    boolean isDark = user.isDarkMode();
+    @Override
+    public void onEnable() {
+        // ✅ Register with automatic dark/light
+        ColorSchemeProvider.getInstance().register("scoreboard",
+            DarkModeAwareResolver.of(
+                ScoreboardThemes.MINIMAL_DARK,
+                ScoreboardThemes.MINIMAL_LIGHT,
+                ctx -> getUser(ctx).isDarkMode()
+            )
+        );
+    }
 
-    // Apply scoreboard's own style
-    String style = user.getScoreboardStyle(); // "minimal", "detailed"
-    return ScoreboardThemes.get(style, isDark); // minimal-dark, detailed-light, etc.
-});
-
-// Use scoreboard scheme
-ColorScheme scoreboardScheme = ColorSchemes.of(player, "scoreboard");
+    // ✅ Use anywhere - no namespace, no isDark!
+    public void updateScoreboard(Player player) {
+        ColorScheme scheme = COLORS.of(player);
+        // ... use scheme
+    }
+}
 ```
 
 ## Resolution Priority (Per Namespace)
