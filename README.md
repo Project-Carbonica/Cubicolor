@@ -1,361 +1,93 @@
 # Cubicolor
 
-[![Automatic Release](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/release.yml)
-[![PR Check](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/pr-check.yml/badge.svg)](https://github.com/YOUR_USERNAME/Cubicolor/actions/workflows/pr-check.yml)
-[![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/Cubicolor?label=version)](https://github.com/YOUR_USERNAME/Cubicolor/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A modular color and typography theming library for Java applications.
-
-> **Note:** This project uses **automatic versioning and Nexus deployment** via GitHub Actions running on self-hosted runners (GitHub ARC). See [VERSIONING.md](VERSIONING.md) for details.
-
-## Overview
-
-Cubicolor provides a semantic, platform-agnostic approach to managing colors and text styles in your Java projects. It supports semantic color roles (primary, secondary, accent, etc.) and Material Design-inspired typography scales.
-
-## Modules
-
-- **cubicolor-api** - Core interfaces and contracts
-- **cubicolor-core** - Default implementations
-- **cubicolor-text** - Typography and text styling system
-- **cubicolor-bukkit** - Minecraft (Bukkit/Spigot) integration
-- **cubicolor-exporter** - JSON import/export for themes (optional)
+Modular color and typography theming library for Java and Minecraft.
 
 ## Features
 
-- Semantic color schemes with predefined roles
-- Platform-agnostic color and text style definitions
-- **MessageTheme** - Combines colors with text decorations (bold, italic, etc.) for perfect Bukkit messages
-- Builder pattern for easy configuration
-- Bukkit/Minecraft integration with MessageFormatter
+- Semantic color schemes (PRIMARY, SECONDARY, ERROR, SUCCESS, etc.)
 - Material Design-inspired typography scale
-- JSON import/export for themes (optional module)
+- MessageTheme for styled Bukkit messages
+- JSON theme loading
+- Multi-plugin ColorScheme management
+
+## Modules
+
+- **cubicolor-api** - Core interfaces
+- **cubicolor-core** - Default implementations
+- **cubicolor-text** - Typography and text styling
+- **cubicolor-bukkit** - Minecraft/Bukkit integration
+- **cubicolor-exporter** - JSON theme loading
+- **cubicolor-manager** - Multi-plugin scheme management
 
 ## Installation
 
-All modules are automatically published to Nexus on every release.
+### Gradle
 
-### Gradle (Kotlin DSL)
-
-```kotlin
+```gradle
 repositories {
-    maven {
-        url = uri("https://nexus.example.com/repository/maven-releases/")
-        // Credentials if needed
-    }
+    maven { url 'https://nexus.example.com/repository/maven-releases/' }
 }
 
 dependencies {
-    implementation("net.cubizor.cubicolor:cubicolor-core:1.0.0")
-
-    // Optional: For text styling
-    implementation("net.cubizor.cubicolor:cubicolor-text:1.0.0")
-
-    // Optional: For Bukkit/Minecraft
-    implementation("net.cubizor.cubicolor:cubicolor-bukkit:1.0.0")
+    implementation 'net.cubizor.cubicolor:cubicolor-core:1.0.0'
+    implementation 'net.cubizor.cubicolor:cubicolor-text:1.0.0'      // Optional
+    implementation 'net.cubizor.cubicolor:cubicolor-bukkit:1.0.0'    // Optional
+    implementation 'net.cubizor.cubicolor:cubicolor-exporter:1.0.0'  // Optional
+    implementation 'net.cubizor.cubicolor:cubicolor-manager:1.0.0'   // Optional
 }
 ```
 
-### Maven
+## Quick Examples
 
-```xml
-<repositories>
-    <repository>
-        <id>nexus</id>
-        <url>https://nexus.example.com/repository/maven-releases/</url>
-    </repository>
-</repositories>
-
-<dependencies>
-    <dependency>
-        <groupId>net.cubizor.cubicolor</groupId>
-        <artifactId>cubicolor-core</artifactId>
-        <version>1.0.0</version>
-    </dependency>
-</dependencies>
-```
-
-## Usage Examples
-
-### Creating a Color Scheme
+### Creating a ColorScheme
 
 ```java
-import net.cubizor.cubicolor.api.*;
-
-// Create a color scheme using the builder
-ColorScheme darkTheme = ColorScheme.builder("dark-theme")
-    .withColor(ColorRole.PRIMARY, ColorFactory.fromHex("#6200EE"))
-    .withColor(ColorRole.SECONDARY, ColorFactory.fromHex("#03DAC6"))
-    .withColor(ColorRole.BACKGROUND, ColorFactory.fromHex("#121212"))
-    .withColor(ColorRole.TEXT, ColorFactory.fromHex("#FFFFFF"))
-    .withColor(ColorRole.ERROR, ColorFactory.fromHex("#CF6679"))
-    .withColor(ColorRole.SUCCESS, ColorFactory.fromHex("#4CAF50"))
-    .build();
-
-// Access colors
-Color primaryColor = darkTheme.getPrimary().orElseThrow();
-Color errorColor = darkTheme.getError().orElseThrow();
-```
-
-### Working with Individual Colors
-
-```java
-// Create colors from hex
-Color purple = ColorFactory.fromHex("#6200EE");
-
-// Create colors from RGB
-Color cyan = ColorFactory.fromRGB(3, 218, 198);
-
-// Convert to different formats
-String hexString = purple.toHex();  // "#6200EE"
-int rgbValue = purple.toRGB();
-```
-
-### Creating a Text Theme
-
-```java
-import net.cubizor.cubicolor.text.*;
-
-TextTheme typography = TextTheme.builder("material-theme")
-    .displayLarge(TextStyle.builder()
-        .color(ColorFactory.fromHex("#000000"))
-        .decoration(TextDecoration.BOLD)
-        .build())
-    .headlineLarge(TextStyle.builder()
-        .color(ColorFactory.fromHex("#212121"))
-        .decoration(TextDecoration.BOLD)
-        .build())
-    .bodyMedium(TextStyle.builder()
-        .color(ColorFactory.fromHex("#424242"))
-        .build())
-    .labelSmall(TextStyle.builder()
-        .color(ColorFactory.fromHex("#757575"))
-        .decoration(TextDecoration.ITALIC)
-        .build())
-    .build();
-
-// Use the styles
-TextStyle headlineStyle = typography.getHeadlineLarge().orElseThrow();
-TextStyle bodyStyle = typography.getBodyMedium().orElseThrow();
-```
-
-### Creating a Message Theme (Bukkit)
-
-MessageTheme combines colors with text decorations (bold, italic, etc.) for semantic message roles - perfect for Bukkit/Minecraft plugins!
-
-```java
-import net.cubizor.cubicolor.text.*;
-
-MessageTheme messageTheme = MessageTheme.builder("my-theme")
-    .error(TextStyle.of(ColorFactory.fromHex("#CF6679"), TextDecoration.BOLD))
-    .success(TextStyle.of(ColorFactory.fromHex("#4CAF50"), TextDecoration.BOLD))
-    .warning(TextStyle.of(ColorFactory.fromHex("#FFC107"), TextDecoration.BOLD))
-    .info(TextStyle.of(ColorFactory.fromHex("#2196F3")))
-    .title(TextStyle.of(ColorFactory.fromHex("#FFFFFF"), TextDecoration.BOLD, TextDecoration.UNDERLINED))
-    .body(TextStyle.of(ColorFactory.fromHex("#FFFFFF")))
-    .muted(TextStyle.of(ColorFactory.fromHex("#757575"), TextDecoration.ITALIC))
+ColorScheme dark = new ColorSchemeBuilderImpl("dark")
+    .primary(ColorFactoryImpl.fromHex("#6200EE"))
+    .secondary(ColorFactoryImpl.fromHex("#03DAC6"))
+    .background(ColorFactoryImpl.fromHex("#121212"))
     .build();
 ```
 
-### Using MessageFormatter (Bukkit)
+### Bukkit Messages
 
 ```java
-import net.cubizor.cubicolor.bukkit.*;
-import org.bukkit.entity.Player;
+MessageTheme theme = /* load from JSON */;
 
-// Load theme from JSON (see JSON section below)
-MessageTheme theme = /* your message theme */;
-
-// Create formatted messages easily
-Component message = MessageFormatter.with(theme)
+Component msg = MessageFormatter.with(theme)
     .error("Error: ")
-    .body("Could not find that item!")
+    .body("Could not find item!")
     .build();
 
-player.sendMessage(message);
-
-// More complex example
-Component announcement = MessageFormatter.with(theme)
-    .title("Server Announcement")
-    .newline()
-    .highlight("New Feature: ")
-    .body("You can now use ")
-    .accent("/teleport")
-    .body(" command!")
-    .build();
-
-player.sendMessage(announcement);
+player.sendMessage(msg);
 ```
 
-### Legacy Bukkit Integration
+### Multi-Plugin Management
 
 ```java
-import net.cubizor.cubicolor.bukkit.*;
-import org.bukkit.entity.Player;
+// Master plugin (Profile)
+ColorSchemeProvider.getInstance().registerMaster("profile", ctx ->
+    database.getPlayerColorScheme((UUID) ctx)
+);
 
-// Create a themed message
-ColorScheme theme = /* your color scheme */;
-TextStyle style = /* your text style */;
-
-// Build and send to player
-ComponentBuilder builder = new ComponentBuilder()
-    .text("Welcome!", theme.getPrimary().orElseThrow())
-    .style(style);
-
-player.sendMessage(builder.build());
+// Consumer plugins (Essentials, Depo, etc.)
+ColorScheme scheme = ColorSchemes.of(player);
 ```
 
-## Color Roles
+## Documentation
 
-Cubicolor supports semantic color roles for consistent theming:
-
-| Role | Purpose |
-|------|---------|
-| `PRIMARY` | Main brand color |
-| `SECONDARY` | Secondary accent color |
-| `ACCENT` | Emphasis and highlights |
-| `BACKGROUND` | Background surfaces |
-| `TEXT` | Primary text color |
-| `ERROR` | Error messages and states |
-| `SUCCESS` | Success confirmations |
-| `WARNING` | Warning messages |
-
-## Typography Scale
-
-The text system provides a complete typography scale:
-
-- **Display** (Large, Medium, Small) - Hero text, largest sizes
-- **Headline** (Large, Medium, Small) - Section headers
-- **Title** (Large, Medium, Small) - Subsection titles
-- **Body** (Large, Medium, Small) - Main content
-- **Label** (Large, Medium, Small) - UI labels, captions
-
-## Message Roles
-
-MessageTheme supports semantic roles for consistent message styling:
-
-| Role | Purpose |
-|------|---------|
-| `ERROR` | Error messages (bold, red) |
-| `SUCCESS` | Success messages (bold, green) |
-| `WARNING` | Warning messages (bold, yellow) |
-| `INFO` | Informational messages |
-| `HIGHLIGHT` | Important emphasis |
-| `PRIMARY` | Primary messages |
-| `SECONDARY` | Secondary messages |
-| `MUTED` | Subtle/less important text |
-| `TITLE` | Message titles |
-| `SUBTITLE` | Subtitles |
-| `BODY` | Regular body text |
-| `LABEL` | Labels and tags |
-| `ACCENT` | Accent/emphasis |
-| `LINK` | Links (underlined) |
-| `DISABLED` | Disabled elements |
-
-## Loading Themes from JSON
-
-Add the exporter module to use JSON themes:
-
-```kotlin
-dependencies {
-    implementation("net.cubizor.cubicolor:cubicolor-exporter:1.0-SNAPSHOT")
-}
-```
-
-### ColorScheme JSON Format
-
-```json
-{
-  "name": "dark-theme",
-  "colors": {
-    "PRIMARY": "#6200EE",
-    "SECONDARY": "#03DAC6",
-    "BACKGROUND": "#121212",
-    "TEXT": "#FFFFFF",
-    "ERROR": "#CF6679",
-    "SUCCESS": "#4CAF50"
-  }
-}
-```
-
-### MessageTheme JSON Format
-
-```json
-{
-  "name": "bukkit-messages-dark",
-  "messages": {
-    "ERROR": {
-      "color": "#CF6679",
-      "decorations": ["BOLD"]
-    },
-    "SUCCESS": {
-      "color": "#4CAF50",
-      "decorations": ["BOLD"]
-    },
-    "WARNING": {
-      "color": "#FFC107",
-      "decorations": ["BOLD"]
-    },
-    "TITLE": {
-      "color": "#FFFFFF",
-      "decorations": ["BOLD", "UNDERLINED"]
-    },
-    "BODY": {
-      "color": "#FFFFFF"
-    }
-  }
-}
-```
-
-### Loading Themes in Your Application
-
-```java
-import net.cubizor.cubicolor.exporter.ThemeLoader;
-
-ThemeLoader loader = new ThemeLoader();
-
-// Load from classpath
-ColorScheme colorScheme = loader.loadColorSchemeFromClasspath("themes/dark-theme.json");
-MessageTheme messageTheme = loader.loadMessageThemeFromClasspath("themes/bukkit-messages.json");
-
-// Load from file
-MessageTheme theme = loader.loadMessageTheme(Paths.get("config/theme.json"));
-
-// Load from string
-String json = "{\"name\":\"custom\", \"messages\": {...}}";
-MessageTheme customTheme = loader.loadMessageThemeFromString(json);
-
-// Use in Bukkit
-MessageFormatter formatter = MessageFormatter.with(messageTheme);
-Component message = formatter.error("Error!").body(" Something went wrong.").build();
-player.sendMessage(message);
-```
-
-### Example JSON Files
-
-The library includes example JSON themes:
-- `examples/dark-theme.json` - Dark color scheme
-- `examples/light-theme.json` - Light color scheme
-- `examples/bukkit-messages-dark.json` - Dark message theme for Bukkit
-- `examples/bukkit-messages-light.json` - Light message theme for Bukkit
-- `examples/minecraft-default.json` - Default Minecraft-style colors
-- `examples/material-typography.json` - Material Design typography
-
-## Building
-
-```bash
-./gradlew build
-```
+- **[Modules](docs/modules.md)** - Module descriptions
+- **[Getting Started](docs/getting-started.md)** - Installation and basic usage
+- **[JSON Themes](docs/json-themes.md)** - Loading themes from JSON
+- **[Manager](docs/manager.md)** - Multi-plugin ColorScheme management
 
 ## Requirements
 
-- Java 8 or higher
-- Gradle 7.0+ (included via wrapper)
+- Java 21
+- Gradle 7.0+
 
 ## License
 
-This project is licensed under the MIT License.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT License
