@@ -97,11 +97,11 @@ jobs:
           echo "Use 'feat:', 'fix:', or 'BREAKING CHANGE' in commit message for automatic releases"
           exit 0
 
-      - name: Run tests
+      - name: Run tests (validation before release)
         if: steps.version_type.outputs.type != 'skip'
         run: ./gradlew test --no-daemon
 
-      - name: Build project
+      - name: Build validation (before release)
         if: steps.version_type.outputs.type != 'skip'
         run: ./gradlew build --no-daemon
 
@@ -124,6 +124,17 @@ jobs:
           NEW_VERSION=$(./gradlew currentVersion -q | grep "Project version:" | awk '{print $3}')
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Released version: $NEW_VERSION"
+
+      - name: Build artifacts with new version
+        if: steps.version_type.outputs.type != 'skip'
+        id: build_artifacts
+        run: |
+          if ! ./gradlew clean build --no-daemon; then
+            echo "❌ Build failed after version bump!"
+            echo "🔄 Rolling back tag..."
+            git tag -d "v${{ steps.create_release.outputs.new_version }}" || true
+            exit 1
+          fi
 
       - name: Push tags
         if: steps.version_type.outputs.type != 'skip'
