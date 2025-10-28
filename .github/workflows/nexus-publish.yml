@@ -112,6 +112,7 @@ jobs:
           generate_pom() {
             local ARTIFACT_ID=$1
             local POM_PATH=$2
+            local POM_VERSION=$3
 
             cat > "$POM_PATH" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -122,7 +123,7 @@ jobs:
             <modelVersion>4.0.0</modelVersion>
             <groupId>${GROUP_ID}</groupId>
             <artifactId>${ARTIFACT_ID}</artifactId>
-            <version>${VERSION}</version>
+            <version>${POM_VERSION}</version>
           EOF
 
             # Add optional fields if provided
@@ -153,7 +154,14 @@ jobs:
           # Function to upload artifact
           upload_artifact() {
             local JAR_PATH=$1
-            local ARTIFACT_ID=$(basename "$JAR_PATH" | sed "s/-${VERSION}.jar//")
+            local JAR_FILENAME=$(basename "$JAR_PATH")
+
+            # Extract artifact ID by removing version and .jar extension
+            # Handles both: cubicolor-core-1.0.0.jar and cubicolor-core-1.0.0-SNAPSHOT.jar
+            local ARTIFACT_ID=$(echo "$JAR_FILENAME" | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?\.jar$//')
+
+            # Extract actual version from filename
+            local ACTUAL_VERSION=$(echo "$JAR_FILENAME" | sed -E 's/.*-([0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?)\.jar$/\1/')
 
             if [ ! -f "$JAR_PATH" ]; then
               echo "⚠️  Warning: $JAR_PATH not found, skipping..."
@@ -171,12 +179,29 @@ jobs:
             echo "📦 Processing: ${ARTIFACT_ID}"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+            # Use actual version from JAR filename
+            local USE_VERSION="${ACTUAL_VERSION}"
+
+            # Determine repository URL based on actual version
+            local UPLOAD_REPO_URL
+            if [[ "$USE_VERSION" == *"SNAPSHOT"* ]]; then
+              UPLOAD_REPO_URL="${NEXUS_SNAPSHOT_URL}"
+            else
+              UPLOAD_REPO_URL="${NEXUS_RELEASE_URL}"
+            fi
+
+            # Ensure URL ends with slash
+            if [[ ! "$UPLOAD_REPO_URL" =~ /$ ]]; then
+              UPLOAD_REPO_URL="${UPLOAD_REPO_URL}/"
+            fi
+
             # Maven path structure
-            local MAVEN_BASE="${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}"
-            local JAR_UPLOAD_URL="${REPO_URL}${MAVEN_BASE}/${ARTIFACT_ID}-${VERSION}.jar"
-            local POM_UPLOAD_URL="${REPO_URL}${MAVEN_BASE}/${ARTIFACT_ID}-${VERSION}.pom"
+            local MAVEN_BASE="${GROUP_PATH}/${ARTIFACT_ID}/${USE_VERSION}"
+            local JAR_UPLOAD_URL="${UPLOAD_REPO_URL}${MAVEN_BASE}/${ARTIFACT_ID}-${USE_VERSION}.jar"
+            local POM_UPLOAD_URL="${UPLOAD_REPO_URL}${MAVEN_BASE}/${ARTIFACT_ID}-${USE_VERSION}.pom"
 
             echo "   📂 Artifact ID: ${ARTIFACT_ID}"
+            echo "   🏷️  Version: ${USE_VERSION}"
             echo "   📁 Source: ${JAR_PATH}"
             echo "   🌐 Target: ${JAR_UPLOAD_URL}"
             echo ""
@@ -196,8 +221,8 @@ jobs:
             fi
 
             # Generate and upload POM
-            local POM_PATH="/tmp/${ARTIFACT_ID}-${VERSION}.pom"
-            generate_pom "$ARTIFACT_ID" "$POM_PATH"
+            local POM_PATH="/tmp/${ARTIFACT_ID}-${USE_VERSION}.pom"
+            generate_pom "$ARTIFACT_ID" "$POM_PATH" "$USE_VERSION"
 
             echo "   📤 Uploading POM..."
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
