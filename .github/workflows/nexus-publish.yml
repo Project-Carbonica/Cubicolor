@@ -86,6 +86,7 @@ jobs:
           GROUP_PATH="${GROUP_ID//./\/}"
 
           # Determine repository URL based on version
+          # NOTE: NEXUS_*_URL secrets must include trailing slash
           if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
             REPO_URL="${NEXUS_SNAPSHOT_URL}"
             echo "📍 Publishing SNAPSHOT version to: ${REPO_URL}"
@@ -93,9 +94,6 @@ jobs:
             REPO_URL="${NEXUS_RELEASE_URL}"
             echo "📍 Publishing RELEASE version to: ${REPO_URL}"
           fi
-
-          # Ensure REPO_URL ends with a slash (remove any existing trailing slash first, then add one)
-          REPO_URL="${REPO_URL%/}/"
 
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🚀 Nexus Publish Configuration"
@@ -181,15 +179,13 @@ jobs:
             local USE_VERSION="${ACTUAL_VERSION}"
 
             # Determine repository URL based on actual version
+            # NOTE: NEXUS_*_URL secrets must include trailing slash
             local UPLOAD_REPO_URL
             if [[ "$USE_VERSION" == *"SNAPSHOT"* ]]; then
               UPLOAD_REPO_URL="${NEXUS_SNAPSHOT_URL}"
             else
               UPLOAD_REPO_URL="${NEXUS_RELEASE_URL}"
             fi
-
-            # Ensure URL ends with slash (remove any existing trailing slash first, then add one)
-            UPLOAD_REPO_URL="${UPLOAD_REPO_URL%/}/"
 
             # Maven path structure
             local MAVEN_BASE="${GROUP_PATH}/${ARTIFACT_ID}/${USE_VERSION}"
@@ -204,64 +200,37 @@ jobs:
 
             # Upload JAR
             echo "   📤 Uploading JAR..."
-
-            # Create temporary file for curl output
-            CURL_OUTPUT=$(mktemp)
-
-            # Perform upload with detailed output
-            HTTP_CODE=$(curl -w "%{http_code}" -o "$CURL_OUTPUT" \
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
               --upload-file "${JAR_PATH}" \
               -H "Content-Type: application/java-archive" \
-              "${JAR_UPLOAD_URL}" 2>&1 | tail -n1)
-
-            CURL_EXIT_CODE=$?
-
-            echo "   🔍 Debug Info:"
-            echo "      - Curl exit code: ${CURL_EXIT_CODE}"
-            echo "      - HTTP status: ${HTTP_CODE}"
-            echo "      - URL: ${JAR_UPLOAD_URL}"
+              "${JAR_UPLOAD_URL}")
 
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "   ✅ JAR uploaded successfully (HTTP ${HTTP_CODE})"
             else
               echo "   ❌ JAR upload failed (HTTP ${HTTP_CODE})"
-              echo "   📄 Response body:"
-              cat "$CURL_OUTPUT" | head -20
-              rm -f "$CURL_OUTPUT"
               exit 1
             fi
-
-            rm -f "$CURL_OUTPUT"
 
             # Generate and upload POM
             local POM_PATH="/tmp/${ARTIFACT_ID}-${USE_VERSION}.pom"
             generate_pom "$ARTIFACT_ID" "$POM_PATH" "$USE_VERSION"
 
             echo "   📤 Uploading POM..."
-
-            # Create temporary file for curl output
-            local POM_CURL_OUTPUT=$(mktemp)
-
-            HTTP_CODE=$(curl -w "%{http_code}" -o "$POM_CURL_OUTPUT" \
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
               --upload-file "${POM_PATH}" \
               -H "Content-Type: application/xml" \
-              "${POM_UPLOAD_URL}" 2>&1 | tail -n1)
-
-            POM_CURL_EXIT_CODE=$?
+              "${POM_UPLOAD_URL}")
 
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "   ✅ POM uploaded successfully (HTTP ${HTTP_CODE})"
             else
-              echo "   ⚠️  POM upload warning (HTTP ${HTTP_CODE}, curl exit: ${POM_CURL_EXIT_CODE})"
-              if [ -f "$POM_CURL_OUTPUT" ]; then
-                echo "   📄 Response:"
-                cat "$POM_CURL_OUTPUT" | head -10
-              fi
+              echo "   ⚠️  POM upload warning (HTTP ${HTTP_CODE})"
             fi
 
-            rm -f "$POM_PATH" "$POM_CURL_OUTPUT"
+            rm -f "$POM_PATH"
           }
 
           # Find and upload all JARs
