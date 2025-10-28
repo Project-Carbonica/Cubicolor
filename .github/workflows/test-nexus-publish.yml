@@ -70,7 +70,11 @@ jobs:
           fi
 
           # Ensure REPO_URL ends with a slash (remove any existing trailing slash first, then add one)
+          echo "🐛 DEBUG - REPO_URL before fix: '${REPO_URL}'"
+          echo "🐛 DEBUG - Length: ${#REPO_URL}, Last char: '${REPO_URL:(-1)}'"
           REPO_URL="${REPO_URL%/}/"
+          echo "🐛 DEBUG - REPO_URL after fix: '${REPO_URL}'"
+          echo "🐛 DEBUG - Length: ${#REPO_URL}, Last char: '${REPO_URL:(-1)}'"
 
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🧪 TEST MODE - Nexus Publish Configuration"
@@ -164,7 +168,9 @@ jobs:
             fi
 
             # Ensure URL ends with slash (remove any existing trailing slash first, then add one)
+            echo "   🐛 DEBUG - UPLOAD_REPO_URL before: '${UPLOAD_REPO_URL}'"
             UPLOAD_REPO_URL="${UPLOAD_REPO_URL%/}/"
+            echo "   🐛 DEBUG - UPLOAD_REPO_URL after: '${UPLOAD_REPO_URL}'"
 
             # Maven path structure
             local MAVEN_BASE="${GROUP_PATH}/${ARTIFACT_ID}/${USE_VERSION}"
