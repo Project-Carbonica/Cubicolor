@@ -1,5 +1,6 @@
 package net.cubizor.cubicolor.bukkit;
 
+import net.cubizor.cubicolor.manager.ColorSchemes;
 import net.cubizor.cubicolor.text.MessageRole;
 import net.cubizor.cubicolor.text.MessageTheme;
 import net.cubizor.cubicolor.text.TextStyle;
@@ -33,6 +34,19 @@ public class MessageFormatter {
      */
     public static MessageFormatter with(MessageTheme theme) {
         return new MessageFormatter(theme);
+    }
+
+    /**
+     * Convenience method to format a message with a theme and role.
+     * Useful for quick one-line message formatting.
+     *
+     * @param theme the MessageTheme
+     * @param role the MessageRole
+     * @param text the text to format
+     * @return the formatted Component
+     */
+    public static Component format(MessageTheme theme, MessageRole role, String text) {
+        return MessageFormatter.with(theme).text(text, role).build();
     }
 
     /**
@@ -189,12 +203,5 @@ public class MessageFormatter {
      */
     public Component build() {
         return component;
-    }
-
-    /**
-     * Convenience method to build and get the component
-     */
-    public static Component format(MessageTheme theme, MessageRole role, String text) {
-        return MessageFormatter.with(theme).text(text, role).build();
     }
 }

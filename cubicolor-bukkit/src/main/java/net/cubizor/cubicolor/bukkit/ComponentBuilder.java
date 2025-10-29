@@ -3,6 +3,7 @@ package net.cubizor.cubicolor.bukkit;
 import net.cubizor.cubicolor.api.Color;
 import net.cubizor.cubicolor.api.ColorRole;
 import net.cubizor.cubicolor.api.ColorScheme;
+import net.cubizor.cubicolor.manager.ColorSchemes;
 import net.cubizor.cubicolor.text.TextStyle;
 import net.cubizor.cubicolor.text.TextTheme;
 import net.kyori.adventure.text.Component;
@@ -34,6 +35,54 @@ public class ComponentBuilder {
      * Creates a new ComponentBuilder with both color scheme and text theme
      */
     public static ComponentBuilder with(ColorScheme scheme, TextTheme textTheme) {
+        return new ComponentBuilder(scheme, textTheme);
+    }
+
+    /**
+     * Creates a new ComponentBuilder using context-based ColorScheme resolution (default namespace)
+     *
+     * @param context the context object (e.g., Player, UUID, etc.)
+     * @return a new ComponentBuilder
+     */
+    public static ComponentBuilder of(Object context) {
+        ColorScheme scheme = ColorSchemes.of(context);
+        return new ComponentBuilder(scheme, null);
+    }
+
+    /**
+     * Creates a new ComponentBuilder using context-based ColorScheme resolution with a specific namespace
+     *
+     * @param context the context object (e.g., Player, UUID, etc.)
+     * @param namespace the namespace to resolve the ColorScheme from
+     * @return a new ComponentBuilder
+     */
+    public static ComponentBuilder of(Object context, String namespace) {
+        ColorScheme scheme = ColorSchemes.of(context, namespace);
+        return new ComponentBuilder(scheme, null);
+    }
+
+    /**
+     * Creates a new ComponentBuilder using context-based ColorScheme resolution with a TextTheme
+     *
+     * @param context the context object (e.g., Player, UUID, etc.)
+     * @param textTheme the TextTheme to use
+     * @return a new ComponentBuilder
+     */
+    public static ComponentBuilder of(Object context, TextTheme textTheme) {
+        ColorScheme scheme = ColorSchemes.of(context);
+        return new ComponentBuilder(scheme, textTheme);
+    }
+
+    /**
+     * Creates a new ComponentBuilder using context-based ColorScheme resolution with a namespace and TextTheme
+     *
+     * @param context the context object (e.g., Player, UUID, etc.)
+     * @param namespace the namespace to resolve the ColorScheme from
+     * @param textTheme the TextTheme to use
+     * @return a new ComponentBuilder
+     */
+    public static ComponentBuilder of(Object context, String namespace, TextTheme textTheme) {
+        ColorScheme scheme = ColorSchemes.of(context, namespace);
         return new ComponentBuilder(scheme, textTheme);
     }
 

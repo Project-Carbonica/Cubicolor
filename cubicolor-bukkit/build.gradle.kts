@@ -15,11 +15,19 @@ dependencies {
     implementation(project(":cubicolor-core"))
     implementation(project(":cubicolor-text"))
     implementation(project(":cubicolor-manager"))
+    implementation(project(":cubicolor-exporter"))
 
     paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+
+tasks.test {
+    useJUnitPlatform()
+}
 
 java {
     toolchain {
