@@ -1,0 +1,19 @@
+{
+  "name": "Sunset Theme",
+  "colors": {
+    "PRIMARY": "#FF6B35",
+    "SECONDARY": "#F7931E",
+    "TERTIARY": "#FDC500",
+    "ACCENT": "#C1121F",
+    "ERROR": "#C1121F",
+    "SUCCESS": "#52B788",
+    "WARNING": "#FFB703",
+    "INFO": "#4EA8DE",
+    "TEXT": "#FFFCF2",
+    "TEXT_SECONDARY": "#CCC5B9",
+    "BACKGROUND": "#252422",
+    "SURFACE": "#403D39",
+    "BORDER": "#7D5A50",
+    "OVERLAY": "#1A1918"
+  }
+}

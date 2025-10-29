@@ -1,0 +1,19 @@
+{
+  "name": "Material Light",
+  "colors": {
+    "PRIMARY": "#6200EE",
+    "SECONDARY": "#018786",
+    "TERTIARY": "#03A9F4",
+    "ACCENT": "#FF5722",
+    "ERROR": "#B00020",
+    "SUCCESS": "#4CAF50",
+    "WARNING": "#FFA000",
+    "INFO": "#2196F3",
+    "TEXT": "#212121",
+    "TEXT_SECONDARY": "#757575",
+    "BACKGROUND": "#FFFFFF",
+    "SURFACE": "#F5F5F5",
+    "BORDER": "#E0E0E0",
+    "OVERLAY": "#EEEEEE"
+  }
+}

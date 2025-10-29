@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":cubicolor-core"))
     implementation(project(":cubicolor-text"))
     implementation(project(":cubicolor-manager"))
+    implementation(project(":cubicolor-exporter"))
 
     paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 

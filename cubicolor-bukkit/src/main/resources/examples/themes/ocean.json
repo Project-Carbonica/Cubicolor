@@ -1,0 +1,19 @@
+{
+  "name": "Ocean Theme",
+  "colors": {
+    "PRIMARY": "#006994",
+    "SECONDARY": "#00B4D8",
+    "TERTIARY": "#90E0EF",
+    "ACCENT": "#0077B6",
+    "ERROR": "#E63946",
+    "SUCCESS": "#06FFA5",
+    "WARNING": "#FFB703",
+    "INFO": "#48CAE4",
+    "TEXT": "#CAF0F8",
+    "TEXT_SECONDARY": "#90E0EF",
+    "BACKGROUND": "#03045E",
+    "SURFACE": "#023E8A",
+    "BORDER": "#0077B6",
+    "OVERLAY": "#001845"
+  }
+}

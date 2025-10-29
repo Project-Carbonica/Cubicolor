@@ -1,0 +1,19 @@
+{
+  "name": "Material Dark",
+  "colors": {
+    "PRIMARY": "#BB86FC",
+    "SECONDARY": "#03DAC6",
+    "TERTIARY": "#CF6679",
+    "ACCENT": "#FF5722",
+    "ERROR": "#CF6679",
+    "SUCCESS": "#4CAF50",
+    "WARNING": "#FFC107",
+    "INFO": "#2196F3",
+    "TEXT": "#E1E1E1",
+    "TEXT_SECONDARY": "#A0A0A0",
+    "BACKGROUND": "#121212",
+    "SURFACE": "#1E1E1E",
+    "BORDER": "#424242",
+    "OVERLAY": "#000000"
+  }
+}
