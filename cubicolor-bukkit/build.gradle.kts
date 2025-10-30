@@ -1,5 +1,5 @@
 plugins {
-    id("java")
+    id("java-library")
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
@@ -11,17 +11,14 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":cubicolor-api"))
-    implementation(project(":cubicolor-core"))
-    implementation(project(":cubicolor-text"))
-    implementation(project(":cubicolor-manager"))
-    implementation(project(":cubicolor-exporter"))
+    api(project(":cubicolor-api"))
+    api(project(":cubicolor-core"))
+    api(project(":cubicolor-text"))
+    api(project(":cubicolor-manager"))
+    api(project(":cubicolor-exporter"))
 
     paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 
