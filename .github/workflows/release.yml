@@ -202,14 +202,6 @@ jobs:
     if: needs.release.outputs.should_skip != 'true' && inputs.skip_nexus != true
     uses: ./.github/workflows/nexus-publish.yml
     with:
-      version: ${{ needs.release.outputs.version }}
-      artifactName: cubicolor-${{ needs.release.outputs.version }}
-      groupId: net.cubizor.cubicolor
-      projectName: Cubicolor
-      projectDescription: A modular color and typography theming library for Java applications
-      projectUrl: https://github.com/Project-Carbonica/Cubicolor/
-      licenseName: MIT License
-      licenseUrl: https://opensource.org/licenses/MIT
       modules: ${{ inputs.modules }}
     secrets:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}

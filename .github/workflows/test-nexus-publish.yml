@@ -16,19 +16,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          cache: 'gradle'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build project
-        run: ./gradlew build --no-daemon
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Get current version
         id: version
@@ -37,236 +35,33 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $VERSION"
 
-      - name: Prepare artifacts
-        run: |
-          mkdir -p artifacts
-          find . -path "*/build/libs/*.jar" ! -name "*-plain.jar" -exec cp {} artifacts/ \;
-
-      - name: List downloaded artifacts
-        run: |
-          echo "📦 Downloaded artifacts for testing:"
-          find artifacts -type f -name "*.jar" | grep -v -- '-plain.jar' || echo "No JAR files found"
-
       - name: Test Nexus Publish
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
           NEXUS_RELEASE_URL: ${{ secrets.NEXUS_RELEASE_URL }}
           NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_SNAPSHOT_URL }}
-          VERSION: ${{ steps.version.outputs.version }}
-          GROUP_ID: net.cubizor.cubicolor
-          PROJECT_NAME: Cubicolor
-          PROJECT_DESCRIPTION: A modular color and typography theming library for Java applications
-          PROJECT_URL: https://github.com/Project-Carbonica/Cubicolor/
-          LICENSE_NAME: MIT License
-          LICENSE_URL: https://opensource.org/licenses/MIT
-          MODULES: ${{ inputs.modules }}
         run: |
           set -e
 
-          # Convert groupId to path (com.example.app -> com/example/app)
-          GROUP_PATH="${GROUP_ID//./\/}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🧪 Testing Nexus Publish"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🏷️  Version: ${{ steps.version.outputs.version }}"
 
-          # Determine repository URL based on version
-          # NOTE: NEXUS_*_URL secrets must include trailing slash
-          if [[ "$VERSION" == *"SNAPSHOT"* ]]; then
-            REPO_URL="${NEXUS_SNAPSHOT_URL}"
-            echo "📍 Publishing SNAPSHOT version to: ${REPO_URL}"
+          if [ -z "${{ inputs.modules }}" ]; then
+            echo "🎯 Testing all modules"
+            ./gradlew publish --no-daemon --stacktrace
           else
-            REPO_URL="${NEXUS_RELEASE_URL}"
-            echo "📍 Publishing RELEASE version to: ${REPO_URL}"
-          fi
-
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🧪 TEST MODE - Nexus Publish Configuration"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📦 Group ID: ${GROUP_ID}"
-          echo "🏷️  Version: ${VERSION}"
-          echo "📍 Repository: ${REPO_URL}"
-          if [ -n "$MODULES" ]; then
-            echo "🎯 Selected Modules: ${MODULES}"
-          else
-            echo "🎯 Publishing: All modules"
-          fi
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo ""
-
-          # Function to generate POM
-          generate_pom() {
-            local ARTIFACT_ID=$1
-            local POM_PATH=$2
-            local POM_VERSION=$3
-
-            cat > "$POM_PATH" <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <project xmlns="http://maven.apache.org/POM/4.0.0"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                   http://maven.apache.org/xsd/maven-4.0.0.xsd">
-            <modelVersion>4.0.0</modelVersion>
-            <groupId>${GROUP_ID}</groupId>
-            <artifactId>${ARTIFACT_ID}</artifactId>
-            <version>${POM_VERSION}</version>
-          EOF
-
-            # Add optional fields if provided
-            if [ -n "$PROJECT_NAME" ]; then
-              echo "  <name>${PROJECT_NAME} - ${ARTIFACT_ID}</name>" >> "$POM_PATH"
-            fi
-
-            if [ -n "$PROJECT_DESCRIPTION" ]; then
-              echo "  <description>${PROJECT_DESCRIPTION}</description>" >> "$POM_PATH"
-            fi
-
-            if [ -n "$PROJECT_URL" ]; then
-              echo "  <url>${PROJECT_URL}</url>" >> "$POM_PATH"
-            fi
-
-            # Add license
-            cat >> "$POM_PATH" <<EOF
-            <licenses>
-              <license>
-                <name>${LICENSE_NAME}</name>
-                <url>${LICENSE_URL}</url>
-              </license>
-            </licenses>
-          </project>
-          EOF
-          }
-
-          # Function to upload artifact
-          upload_artifact() {
-            local JAR_PATH=$1
-            local JAR_FILENAME=$(basename "$JAR_PATH")
-
-            # Extract artifact ID by removing version and .jar extension
-            # Handles both: cubicolor-core-1.0.0.jar and cubicolor-core-1.0.0-SNAPSHOT.jar
-            local ARTIFACT_ID=$(echo "$JAR_FILENAME" | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?\.jar$//')
-
-            # Extract actual version from filename
-            local ACTUAL_VERSION=$(echo "$JAR_FILENAME" | sed -E 's/.*-([0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?)\.jar$/\1/')
-
-            if [ ! -f "$JAR_PATH" ]; then
-              echo "⚠️  Warning: $JAR_PATH not found, skipping..."
-              return
-            fi
-
-            # Skip plain JARs (Spring Boot generates these)
-            if [[ "$JAR_PATH" == *"-plain.jar" ]]; then
-              echo "⏭️  Skipping plain JAR: $ARTIFACT_ID"
-              return
-            fi
-
-            echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "📦 Processing: ${ARTIFACT_ID}"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-            # Use actual version from JAR filename
-            local USE_VERSION="${ACTUAL_VERSION}"
-
-            # Determine repository URL based on actual version
-            # NOTE: NEXUS_*_URL secrets must include trailing slash
-            local UPLOAD_REPO_URL
-            if [[ "$USE_VERSION" == *"SNAPSHOT"* ]]; then
-              UPLOAD_REPO_URL="${NEXUS_SNAPSHOT_URL}"
-            else
-              UPLOAD_REPO_URL="${NEXUS_RELEASE_URL}"
-            fi
-
-            # Maven path structure
-            local MAVEN_BASE="${GROUP_PATH}/${ARTIFACT_ID}/${USE_VERSION}"
-            local JAR_UPLOAD_URL="${UPLOAD_REPO_URL}${MAVEN_BASE}/${ARTIFACT_ID}-${USE_VERSION}.jar"
-            local POM_UPLOAD_URL="${UPLOAD_REPO_URL}${MAVEN_BASE}/${ARTIFACT_ID}-${USE_VERSION}.pom"
-
-            echo "   📂 Artifact ID: ${ARTIFACT_ID}"
-            echo "   🏷️  Version: ${USE_VERSION}"
-            echo "   📁 Source: ${JAR_PATH}"
-            echo "   🌐 Target: ${JAR_UPLOAD_URL}"
-            echo ""
-
-            # Upload JAR
-            echo "   📤 Uploading JAR..."
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
-              --upload-file "${JAR_PATH}" \
-              -H "Content-Type: application/java-archive" \
-              "${JAR_UPLOAD_URL}")
-
-            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-              echo "   ✅ JAR uploaded successfully (HTTP ${HTTP_CODE})"
-            else
-              echo "   ❌ JAR upload failed (HTTP ${HTTP_CODE})"
-              exit 1
-            fi
-
-            # Generate and upload POM
-            local POM_PATH="/tmp/${ARTIFACT_ID}-${USE_VERSION}.pom"
-            generate_pom "$ARTIFACT_ID" "$POM_PATH" "$USE_VERSION"
-
-            echo "   📤 Uploading POM..."
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" \
-              --upload-file "${POM_PATH}" \
-              -H "Content-Type: application/xml" \
-              "${POM_UPLOAD_URL}")
-
-            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-              echo "   ✅ POM uploaded successfully (HTTP ${HTTP_CODE})"
-            else
-              echo "   ⚠️  POM upload warning (HTTP ${HTTP_CODE})"
-            fi
-
-            rm -f "$POM_PATH"
-          }
-
-          # Find and upload all JARs
-          echo "🔍 Searching for artifacts..."
-          echo ""
-
-          UPLOADED=0
-          SKIPPED=0
-
-          # Helper function to check if module should be processed
-          should_upload() {
-            local ARTIFACT_ID=$1
-
-            if [ -z "$MODULES" ]; then
-              return 0  # Upload all if no filter
-            fi
-
-            IFS=',' read -ra MODULE_ARRAY <<< "$MODULES"
-            for module in "${MODULE_ARRAY[@]}"; do
+            echo "🎯 Testing selected modules: ${{ inputs.modules }}"
+            IFS=',' read -ra MODULES <<< "${{ inputs.modules }}"
+            for module in "${MODULES[@]}"; do
               module=$(echo "$module" | xargs)
-              if [ "$module" = "$ARTIFACT_ID" ]; then
-                return 0  # Found in list
-              fi
+              echo "📦 Publishing ${module}..."
+              ./gradlew :${module}:publish --no-daemon --stacktrace
             done
-
-            return 1  # Not found in list
-          }
-
-          while IFS= read -r jar_file; do
-            JAR_FILENAME=$(basename "$jar_file")
-            ARTIFACT_ID=$(echo "$JAR_FILENAME" | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+(-SNAPSHOT)?\.jar$//')
-
-            if should_upload "$ARTIFACT_ID"; then
-              upload_artifact "$jar_file"
-              UPLOADED=$((UPLOADED + 1))
-            else
-              echo "⏭️  Skipping module (not selected): $ARTIFACT_ID"
-              SKIPPED=$((SKIPPED + 1))
-            fi
-          done < <(find artifacts -type f -name "*.jar" | grep -v -- '-plain.jar')
-
-          echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "✨ Test Publishing Complete!"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📦 Total artifacts tested: ${UPLOADED}"
-          if [ "$SKIPPED" -gt 0 ]; then
-            echo "⏭️  Artifacts skipped: ${SKIPPED}"
           fi
-          echo "📍 Repository: ${REPO_URL}"
-          echo "🏷️  Version: ${VERSION}"
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Test publish complete!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
