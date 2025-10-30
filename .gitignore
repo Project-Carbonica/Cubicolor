@@ -43,3 +43,10 @@ bin/
 .DS_Store
 
 cubicolor-bukkit/logs
+
+### Semantic Release ###
+VERSION
+
+### TeamCity ###
+.teamcity/.teamcity.vcs.settings.xml
+.teamcity/node_modules/

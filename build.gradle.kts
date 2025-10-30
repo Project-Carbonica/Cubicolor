@@ -1,33 +1,10 @@
 plugins {
     id("java")
-    id("pl.allegro.tech.build.axion-release") version "1.21.0"
-}
-
-// Axion-release yapılandırması (GitHub Actions ile otomatik versiyonlama)
-scmVersion {
-    tag {
-        prefix.set("v")
-        versionSeparator.set("")
-    }
-
-    versionCreator { versionFromTag, position ->
-        val baseVersion = versionFromTag.split("-").first()
-        if (position.branch == "main" || position.branch == "master") {
-            baseVersion
-        } else {
-            "$baseVersion-${position.branch}-SNAPSHOT"
-        }
-    }
-
-    // GitHub Actions için ayarlar
-    checks {
-        // CI ortamında uncommitted changes kontrolünü devre dışı bırak
-        uncommittedChanges.set(false)
-    }
 }
 
 group = "net.cubizor.cubicolor"
-version = scmVersion.version
+// Version will be set by semantic-release in CI, fallback to 0.0.0-dev for local builds
+version = System.getenv("PROJECT_VERSION") ?: "0.0.0-dev"
 
 // Alt projeler için ortak yapılandırma
 subprojects {
@@ -73,14 +50,18 @@ subprojects {
             }
 
             repositories {
-                maven {
-                    val releasesRepoUrl = System.getenv("NEXUS_RELEASE_URL") ?: ""
-                    val snapshotsRepoUrl = System.getenv("NEXUS_SNAPSHOT_URL") ?: ""
-                    url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
+                // Nexus repository (sadece CI'da kullanılır)
+                val nexusReleaseUrl = System.getenv("NEXUS_RELEASE_URL")
+                val nexusSnapshotUrl = System.getenv("NEXUS_SNAPSHOT_URL")
 
-                    credentials {
-                        username = System.getenv("NEXUS_USERNAME")
-                        password = System.getenv("NEXUS_PASSWORD")
+                if (nexusReleaseUrl != null && nexusSnapshotUrl != null) {
+                    maven {
+                        url = uri(if (version.toString().endsWith("SNAPSHOT")) nexusSnapshotUrl else nexusReleaseUrl)
+
+                        credentials {
+                            username = System.getenv("NEXUS_USERNAME")
+                            password = System.getenv("NEXUS_PASSWORD")
+                        }
                     }
                 }
             }
