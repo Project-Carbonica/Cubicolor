@@ -1,0 +1,111 @@
+name: Build & Publish (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: 'Java version to use'
+        required: false
+        type: string
+        default: '21'
+      version-artifact-name:
+        description: 'Name of the VERSION artifact to download'
+        required: false
+        type: string
+        default: 'version-file'
+      publish-task:
+        description: 'Gradle task to publish'
+        required: false
+        type: string
+        default: 'publish'
+    secrets:
+      NEXUS_RELEASE_URL:
+        required: true
+      NEXUS_SNAPSHOT_URL:
+        required: true
+      NEXUS_USERNAME:
+        required: true
+      NEXUS_PASSWORD:
+        required: true
+
+jobs:
+  build-versioned:
+    name: Build Versioned JAR
+    runs-on: arc-runner-set
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download VERSION artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.version-artifact-name }}-${{ github.run_id }}
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.java-version }}
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with version
+        run: |
+          export PROJECT_VERSION=$(cat VERSION)
+          echo "📦 Building version: $PROJECT_VERSION"
+          ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-files-${{ github.run_id }}
+          path: |
+            cubicolor-*/build/libs/*.jar
+          retention-days: 30
+
+  publish:
+    name: Publish to Nexus
+    runs-on: arc-runner-set
+    needs: [build-versioned]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download VERSION artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.version-artifact-name }}-${{ github.run_id }}
+
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.java-version }}
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Publish to Nexus
+        env:
+          NEXUS_RELEASE_URL: ${{ secrets.NEXUS_RELEASE_URL }}
+          NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_SNAPSHOT_URL }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          export PROJECT_VERSION=$(cat VERSION)
+          echo "🚀 Publishing version: $PROJECT_VERSION"
+          ./gradlew ${{ inputs.publish-task }} --no-daemon --stacktrace
+          echo "✅ Successfully published to Nexus"

@@ -1,0 +1,110 @@
+name: Semantic Release (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: 'lts/*'
+      working-directory:
+        description: 'Working directory for semantic-release'
+        required: false
+        type: string
+        default: '.teamcity'
+      git-author-name:
+        description: 'Git author name'
+        required: false
+        type: string
+        default: 'GitHub Actions CI'
+      git-author-email:
+        description: 'Git author email'
+        required: false
+        type: string
+        default: 'ci@cubizor.net'
+    outputs:
+      new-release-published:
+        description: 'Whether a new release was published'
+        value: ${{ jobs.release.outputs.new-release-published }}
+      new-release-version:
+        description: 'Version of the new release'
+        value: ${{ jobs.release.outputs.new-release-version }}
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: arc-runner-set
+    timeout-minutes: 15
+    outputs:
+      new-release-published: ${{ steps.semantic.outputs.new-release-published }}
+      new-release-version: ${{ steps.semantic.outputs.new-release-version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.working-directory }}/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: npm ci
+
+      - name: Configure Git
+        run: |
+          git config user.name "${{ inputs.git-author-name }}"
+          git config user.email "${{ inputs.git-author-email }}"
+
+      - name: Run Semantic Release
+        id: semantic
+        working-directory: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Running semantic-release..."
+          npx semantic-release
+
+          # Check if VERSION file was created (relative to project root)
+          if [ -f ../VERSION ]; then
+            PROJECT_VERSION=$(cat ../VERSION)
+            echo "new-release-published=true" >> $GITHUB_OUTPUT
+            echo "new-release-version=$PROJECT_VERSION" >> $GITHUB_OUTPUT
+            echo "✅ New version released: $PROJECT_VERSION"
+          else
+            echo "new-release-published=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changes requiring release"
+          fi
+
+      - name: Upload VERSION artifact
+        if: steps.semantic.outputs.new-release-published == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-file-${{ github.run_id }}
+          path: VERSION
+          retention-days: 7
+
+      - name: Upload CHANGELOG artifact
+        if: steps.semantic.outputs.new-release-published == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-${{ github.run_id }}
+          path: CHANGELOG.md
+          retention-days: 30

@@ -1,0 +1,50 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  # Step 1: Build and Test
+  build-test:
+    name: Build & Test
+    uses: ./.github/workflows/build-test.yml
+    with:
+      java-version: '21'
+      gradle-tasks: 'clean build test'
+
+  # Step 2: Semantic Release
+  release:
+    name: Semantic Release
+    needs: [build-test]
+    uses: ./.github/workflows/release.yml
+    with:
+      node-version: 'lts/*'
+      working-directory: '.teamcity'
+      git-author-name: 'GitHub Actions CI'
+      git-author-email: 'ci@cubizor.net'
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Step 3 & 4: Build Versioned JAR and Publish to Nexus
+  publish:
+    name: Build & Publish
+    needs: [release]
+    if: needs.release.outputs.new-release-published == 'true'
+    uses: ./.github/workflows/publish.yml
+    with:
+      java-version: '21'
+      version-artifact-name: 'version-file'
+      publish-task: 'publish'
+    secrets:
+      NEXUS_RELEASE_URL: ${{ secrets.NEXUS_RELEASE_URL }}
+      NEXUS_SNAPSHOT_URL: ${{ secrets.NEXUS_SNAPSHOT_URL }}
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
