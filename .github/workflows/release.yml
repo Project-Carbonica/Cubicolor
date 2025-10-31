@@ -31,7 +31,7 @@ on:
         description: 'Version of the new release'
         value: ${{ jobs.release.outputs.new-release-version }}
     secrets:
-      GITHUB_TOKEN:
+      RELEASE_TOKEN:
         required: true
 
 permissions:
@@ -54,7 +54,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -76,8 +76,8 @@ jobs:
         id: semantic
         working-directory: ${{ inputs.working-directory }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           echo "Running semantic-release..."
           npx semantic-release

@@ -31,7 +31,7 @@ jobs:
       git-author-name: 'GitHub Actions CI'
       git-author-email: 'ci@cubizor.net'
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
   # Step 3 & 4: Build Versioned JAR and Publish to Nexus
   publish:
