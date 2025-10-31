@@ -51,9 +51,10 @@ jobs:
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
+        if: (!cancelled())
         with:
-          files: '**/build/test-results/**/*.xml'
+          files: |
+            test-results/**/*.xml
           check_name: 'Test Results'
 
       - name: Upload Test Reports
@@ -61,7 +62,7 @@ jobs:
         if: always()
         with:
           name: test-results-${{ github.run_id }}
-          path: '**/build/test-results/**/*.xml'
+          path: 'test-results/**/*.xml'
           retention-days: 30
 
       - name: Upload Build Reports
