@@ -77,11 +77,9 @@ jobs:
         with:
           semantic_version: 25
           extra_plugins: |
-            @semantic-release/changelog@6
-            @semantic-release/git@10
-            @semantic-release/exec@6
-            conventional-changelog-conventionalcommits@5
-            gradle-semantic-release-plugin@1
+            @semantic-release/changelog@6.0.3
+            @semantic-release/git@10.0.1
+            gradle-semantic-release-plugin@1.10.1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
