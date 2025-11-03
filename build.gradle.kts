@@ -3,8 +3,8 @@ plugins {
 }
 
 group = "net.cubizor.cubicolor"
-// Version will be set by semantic-release in CI, fallback to 0.0.0-dev for local builds
-version = System.getenv("PROJECT_VERSION") ?: "0.0.0-dev"
+// Version from gradle.properties (managed by semantic-release)
+version = project.findProperty("project_version") ?: "0.0.0-dev"
 
 // Alt projeler için ortak yapılandırma
 subprojects {

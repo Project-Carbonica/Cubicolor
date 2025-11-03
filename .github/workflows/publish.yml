@@ -8,11 +8,6 @@ on:
         required: false
         type: string
         default: '21'
-      version-artifact-name:
-        description: 'Name of the VERSION artifact to download'
-        required: false
-        type: string
-        default: 'version-file'
       publish-task:
         description: 'Gradle task to publish'
         required: false
@@ -41,11 +36,6 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Download VERSION artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.version-artifact-name }}-${{ github.run_id }}
-
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@v4
         with:
@@ -58,7 +48,7 @@ jobs:
 
       - name: Build with version
         run: |
-          export PROJECT_VERSION=$(cat VERSION)
+          PROJECT_VERSION=$(grep "^project_version=" gradle.properties | cut -d'=' -f2)
           echo "📦 Building version: $PROJECT_VERSION"
           ./gradlew clean build --no-daemon --stacktrace
 
@@ -83,11 +73,6 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Download VERSION artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.version-artifact-name }}-${{ github.run_id }}
-
       - name: Set up JDK ${{ inputs.java-version }}
         uses: actions/setup-java@v4
         with:
@@ -105,7 +90,7 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
-          export PROJECT_VERSION=$(cat VERSION)
+          PROJECT_VERSION=$(grep "^project_version=" gradle.properties | cut -d'=' -f2)
           echo "🚀 Publishing version: $PROJECT_VERSION"
           ./gradlew ${{ inputs.publish-task }} --no-daemon --stacktrace
           echo "✅ Successfully published to Nexus"

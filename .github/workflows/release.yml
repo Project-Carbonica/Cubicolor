@@ -8,11 +8,11 @@ on:
         required: false
         type: string
         default: 'lts/*'
-      working-directory:
-        description: 'Working directory for semantic-release'
+      java-version:
+        description: 'Java version to use'
         required: false
         type: string
-        default: '.teamcity'
+        default: '21'
       git-author-name:
         description: 'Git author name'
         required: false
@@ -56,16 +56,26 @@ jobs:
           persist-credentials: false
           token: ${{ secrets.RELEASE_TOKEN }}
 
+      - name: Set up JDK ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ inputs.java-version }}
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
           cache: 'npm'
-          cache-dependency-path: '${{ inputs.working-directory }}/package-lock.json'
+          cache-dependency-path: '.github/package-lock.json'
 
       - name: Install dependencies
-        working-directory: ${{ inputs.working-directory }}
-        run: npm ci
+        working-directory: .github
+        run: npm install
 
       - name: Configure Git
         run: |
@@ -74,17 +84,17 @@ jobs:
 
       - name: Run Semantic Release
         id: semantic
-        working-directory: ${{ inputs.working-directory }}
         env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          PATH: ${{ github.workspace }}/.github/node_modules/.bin:$PATH
         run: |
           echo "Running semantic-release..."
-          npx semantic-release
+          semantic-release --extends ./.github/.releaserc.json
 
-          # Check if VERSION file was created (relative to project root)
-          if [ -f ../VERSION ]; then
-            PROJECT_VERSION=$(cat ../VERSION)
+          # Read version from gradle.properties
+          if grep -q "^project_version=" gradle.properties; then
+            PROJECT_VERSION=$(grep "^project_version=" gradle.properties | cut -d'=' -f2)
             echo "new-release-published=true" >> $GITHUB_OUTPUT
             echo "new-release-version=$PROJECT_VERSION" >> $GITHUB_OUTPUT
             echo "✅ New version released: $PROJECT_VERSION"
@@ -92,14 +102,6 @@ jobs:
             echo "new-release-published=false" >> $GITHUB_OUTPUT
             echo "ℹ️ No changes requiring release"
           fi
-
-      - name: Upload VERSION artifact
-        if: steps.semantic.outputs.new-release-published == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: version-file-${{ github.run_id }}
-          path: VERSION
-          retention-days: 7
 
       - name: Upload CHANGELOG artifact
         if: steps.semantic.outputs.new-release-published == 'true'
