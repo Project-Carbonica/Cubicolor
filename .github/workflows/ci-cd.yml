@@ -33,6 +33,19 @@ jobs:
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
+  # Debug: Check version outputs
+  debug-version:
+    name: Debug Version Outputs
+    needs: [version]
+    runs-on: arc-runner-set
+    steps:
+      - name: Print version outputs
+        run: |
+          echo "🔍 Version Job Outputs:"
+          echo "new-release-published = ${{ needs.version.outputs.new-release-published }}"
+          echo "new-release-version = ${{ needs.version.outputs.new-release-version }}"
+          echo "Condition will be: ${{ needs.version.outputs.new-release-published == 'true' }}"
+
   # Step 3 & 4: Build Versioned JAR and Publish to Nexus
   publish:
     name: Build & Publish
