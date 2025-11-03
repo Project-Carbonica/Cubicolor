@@ -109,28 +109,13 @@ public class ProfilePlugin extends JavaPlugin {
 
 ### Chat Plugin (Own Themes + Dark/Light)
 
-**Before (Manual isDark checks everywhere):**
-```java
-// ❌ Old way
-ColorSchemeProvider.getInstance().register("chat", context -> {
-    boolean isDark = getUser(context).isDarkMode();  // Manual check
-    return isDark ? ChatThemes.DARK : ChatThemes.LIGHT;
-});
-
-// ❌ Had to specify namespace every time
-ColorScheme chatScheme = ColorSchemes.of(player, "chat");
-```
-
-**After (Clean and automatic!):**
 ```java
 public class ChatPlugin extends JavaPlugin {
-    // ✅ Namespace-bound instance
     private static final NamespacedColorSchemes COLORS =
         NamespacedColorSchemes.forNamespace("chat");
 
     @Override
     public void onEnable() {
-        // ✅ Register once with automatic dark/light
         ColorSchemeProvider.getInstance().register("chat",
             DarkModeAwareResolver.of(
                 ChatThemes.DARK,
@@ -140,9 +125,8 @@ public class ChatPlugin extends JavaPlugin {
         );
     }
 
-    // ✅ Use anywhere - super clean!
     public void sendChatMessage(Player player, String message) {
-        ColorScheme scheme = COLORS.of(player);  // That's it!
+        ColorScheme scheme = COLORS.of(player);
         // ... use scheme
     }
 }
@@ -245,164 +229,12 @@ ColorScheme scheme = ColorSchemes.of(sessionId, "scoreboard"); // Session ID
 
 ## Thread Safety
 
-All operations are thread-safe:
-
-```java
-// Safe in async tasks
-executor.submit(() -> {
-    ColorScheme profileScheme = ColorSchemes.of(userId, "profile");
-    ColorScheme chatScheme = ColorSchemes.of(userId, "chat");
-    // Use schemes...
-});
-```
-
-## Complete Example: Minecraft Server
-
-### Profile Plugin (Manages Dark/Light)
-
-```java
-public class ProfilePlugin extends JavaPlugin {
-    private Database db;
-
-    @Override
-    public void onEnable() {
-        db = new Database();
-
-        // Register profile namespace
-        ColorSchemeProvider.getInstance().register("profile", this::resolveProfile);
-
-        // Command to toggle dark/light
-        getCommand("darkmode").setExecutor((sender, cmd, label, args) -> {
-            Player p = (Player) sender;
-            UUID id = p.getUniqueId();
-
-            // Toggle dark mode
-            boolean isDark = !db.isDarkMode(id);
-            db.setDarkMode(id, isDark);
-
-            p.sendMessage("Dark mode: " + (isDark ? "ON" : "OFF"));
-            return true;
-        });
-    }
-
-    private ColorScheme resolveProfile(Object ctx) {
-        UUID id = ((Player) ctx).getUniqueId();
-        boolean isDark = db.isDarkMode(id);
-        return isDark ? ProfileThemes.DARK : ProfileThemes.LIGHT;
-    }
-}
-```
-
-### Chat Plugin (Own Themes)
-
-```java
-public class ChatPlugin extends JavaPlugin {
-    private Database db;
-
-    @Override
-    public void onEnable() {
-        db = new Database();
-
-        // Register chat namespace
-        ColorSchemeProvider.getInstance().register("chat", this::resolveChat);
-
-        // Command to change chat theme
-        getCommand("chattheme").setExecutor((sender, cmd, label, args) -> {
-            Player p = (Player) sender;
-            UUID id = p.getUniqueId();
-
-            // Set chat theme
-            String theme = args[0]; // "rainbow", "neon", "pastel"
-            db.setChatTheme(id, theme);
-
-            p.sendMessage("Chat theme: " + theme);
-            return true;
-        });
-    }
-
-    private ColorScheme resolveChat(Object ctx) {
-        UUID id = ((Player) ctx).getUniqueId();
-
-        // Read dark/light from User (managed by profile)
-        boolean isDark = db.isDarkMode(id);
-
-        // Get chat theme
-        String theme = db.getChatTheme(id);
-
-        // Return appropriate chat scheme
-        return ChatThemes.get(theme, isDark);
-    }
-}
-```
-
-### Scoreboard Plugin (Own Styles)
-
-```java
-public class ScoreboardPlugin extends JavaPlugin {
-    private Database db;
-
-    @Override
-    public void onEnable() {
-        db = new Database();
-
-        // Register scoreboard namespace
-        ColorSchemeProvider.getInstance().register("scoreboard", this::resolveScoreboard);
-
-        // Command to change scoreboard style
-        getCommand("scoreboardstyle").setExecutor((sender, cmd, label, args) -> {
-            Player p = (Player) sender;
-            UUID id = p.getUniqueId();
-
-            // Set scoreboard style
-            String style = args[0]; // "minimal", "detailed"
-            db.setScoreboardStyle(id, style);
-
-            p.sendMessage("Scoreboard style: " + style);
-            return true;
-        });
-    }
-
-    private ColorScheme resolveScoreboard(Object ctx) {
-        UUID id = ((Player) ctx).getUniqueId();
-
-        // Read dark/light from User (managed by profile)
-        boolean isDark = db.isDarkMode(id);
-
-        // Get scoreboard style
-        String style = db.getScoreboardStyle(id);
-
-        // Return appropriate scoreboard scheme
-        return ScoreboardThemes.get(style, isDark);
-    }
-}
-```
-
-## Utility Methods
-
-Check registered namespaces:
-
-```java
-// Check if namespace is registered
-boolean isRegistered = ColorSchemes.isRegistered("profile");
-
-// Get all registered namespaces
-Set<String> namespaces = ColorSchemes.getRegisteredNamespaces();
-// Returns: ["profile", "chat", "scoreboard"]
-```
-
-Unregister namespace:
-
-```java
-// Unregister (useful for plugin reload)
-ColorSchemeProvider.getInstance().unregister("profile");
-```
+All operations are thread-safe and can be used in async tasks.
 
 ## Benefits
 
 1. **Complete Independence**: Each plugin manages its own ColorSchemes
 2. **Central Dark/Light Management**: Profile manages dark/light preference
-3. **No Conflicts**: Chat can use rainbow while scoreboard uses minimal
+3. **No Conflicts**: Different plugins can use different themes
 4. **User Control**: Users can customize each plugin independently
 5. **Flexible**: Works with or without database
-
-That's it!

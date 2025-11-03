@@ -1,4 +1,4 @@
-# Getting Started
+ re# Getting Started
 
 ## Installation
 
@@ -49,60 +49,6 @@ ColorScheme dark = new ColorSchemeBuilderImpl("dark")
 ```java
 Color primary = dark.getPrimary().orElse(Colors.WHITE);
 String hex = primary.toHex();  // "#6200EE"
-```
-
-### Text Styling
-
-```java
-import net.cubizor.cubicolor.text.*;
-
-TextStyle errorStyle = TextStyle.builder()
-    .color(Colors.RED)
-    .decoration(TextDecoration.BOLD)
-    .build();
-
-String styled = errorStyle.apply("Error message");
-```
-
-### Message Themes
-
-```java
-MessageTheme theme = new MessageThemeBuilderImpl("my-theme")
-    .error(TextStyle.of(Colors.RED, TextDecoration.BOLD))
-    .success(TextStyle.of(Colors.GREEN, TextDecoration.BOLD))
-    .warning(TextStyle.of(Colors.YELLOW, TextDecoration.BOLD))
-    .body(TextStyle.of(Colors.WHITE))
-    .build();
-
-TextStyle errorStyle = theme.getStyle(MessageRole.ERROR);
-```
-
-## Bukkit Integration
-
-### MessageFormatter
-
-```java
-import net.cubizor.cubicolor.bukkit.MessageFormatter;
-
-Component message = MessageFormatter.with(messageTheme)
-    .error("Error: ")
-    .body("Could not find item!")
-    .build();
-
-player.sendMessage(message);
-```
-
-### Complex Messages
-
-```java
-Component announcement = MessageFormatter.with(theme)
-    .title("Server Update")
-    .newline()
-    .highlight("New feature: ")
-    .body("Use ")
-    .accent("/teleport")
-    .body(" command!")
-    .build();
 ```
 
 ## Loading from JSON

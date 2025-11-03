@@ -10,6 +10,7 @@ permissions:
   issues: write
   pull-requests: write
   packages: write
+  checks: write
 
 jobs:
   # Step 1: Build and Test

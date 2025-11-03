@@ -110,139 +110,23 @@ Component component = ComponentBuilder.of(player)
 player.sendMessage(component);
 ```
 
-## Örnekler
-
-### Örnek 1: Hoşgeldin Mesajı
+## Example Usage
 
 ```java
 public void sendWelcome(Player player) {
     Component message = MiniMessageFormatter.format(
         """
-        <primary><bold>Sunucuya Hoşgeldin!</bold></primary>
-
-        <success>✓</success> <text>Bağlandın</text>
-        <info>ℹ</info> <text_secondary>/help ile komutları görebilirsin</text_secondary>
+        <primary><bold>Welcome!</bold></primary>
+        <success>✓</success> <text>Connected</text>
         """,
         player
     );
-
     player.sendMessage(message);
 }
 ```
 
-### Örnek 2: Hata Mesajları
+## Additional Resources
 
-```java
-public void sendError(Player player, String error) {
-    Component message = MiniMessageFormatter.format(
-        "<error><bold>HATA!</bold></error> <warning>%s</warning>".formatted(error),
-        player
-    );
-
-    player.sendMessage(message);
-}
-```
-
-### Örnek 3: Chat Mesajları
-
-```java
-public void broadcastChat(Player sender, String message) {
-    // Her oyuncu kendi temasıyla görür
-    for (Player receiver : Bukkit.getOnlinePlayers()) {
-        Component formatted = MiniMessageFormatter.format(
-            "<primary>[%s]</primary> <text>%s</text>".formatted(
-                sender.getName(),
-                message
-            ),
-            receiver  // Her oyuncunun kendi teması
-        );
-        receiver.sendMessage(formatted);
-    }
-}
-```
-
-### Örnek 4: Programatik ColorScheme Oluşturma
-
-```java
-import net.cubizor.cubicolor.core.Colors;
-
-// Kod içinde tema oluştur
-ColorScheme customScheme = Colors.scheme("custom")
-    .primary(Colors.rgb(255, 100, 150))
-    .secondary(Colors.rgb(100, 150, 255))
-    .error(Colors.rgb(255, 50, 50))
-    .success(Colors.rgb(50, 255, 50))
-    .build();
-
-// Direkt kullan
-Component msg = MiniMessageFormatter.format(
-    "<primary>Özel tema!</primary>",
-    customScheme
-);
-```
-
-### Örnek 5: Komut ile Tema Değiştirme
-
-```java
-@Command("theme")
-public void handleTheme(Player player, String themeName) {
-    // Oyuncunun temasını değiştir
-    User user = getUser(player);
-    user.setTheme(themeName);
-
-    // Yeni tema ile mesaj gönder
-    Component success = MiniMessageFormatter.format(
-        "<success>Tema değiştirildi:</success> <primary>" + themeName + "</primary>",
-        player
-    );
-    player.sendMessage(success);
-}
-```
-
-## API Referansı
-
-### MiniMessageFormatter
-
-```java
-// Context tabanlı (default namespace)
-static Component format(String message, Object context)
-
-// Context tabanlı (özel namespace)
-static Component format(String message, Object context, String namespace)
-
-// Direkt ColorScheme ile
-static Component format(String message, ColorScheme scheme)
-
-// Ek resolver'larla
-static Component format(String message, ColorScheme scheme, TagResolver... additionalResolvers)
-static Component format(String message, Object context, TagResolver... additionalResolvers)
-
-// TagResolver oluşturma
-static TagResolver resolver(ColorScheme scheme)
-static TagResolver resolver(Object context)
-static TagResolver resolver(Object context, String namespace)
-```
-
-### ColorSchemeTagResolver
-
-```java
-// ColorScheme'den TagResolver oluştur
-static TagResolver of(ColorScheme scheme)
-```
-
-### ComponentBuilder
-
-```java
-// Context tabanlı oluşturma
-static ComponentBuilder of(Object context)
-static ComponentBuilder of(Object context, String namespace)
-
-// Direkt ColorScheme ile
-static ComponentBuilder with(ColorScheme scheme)
-```
-
-## Daha Fazla Bilgi
-
-- **[Manager Modülü](manager.md)** - ColorSchemeProvider ve namespace yönetimi
-- **[Getting Started](getting-started.md)** - Temel kurulum
-- **[Modules](modules.md)** - Tüm modüller
+- **[Manager Module](manager.md)** - ColorSchemeProvider and namespace management
+- **[Getting Started](getting-started.md)** - Basic setup
+- **[Modules](modules.md)** - All modules
