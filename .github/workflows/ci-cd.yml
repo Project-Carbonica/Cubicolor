@@ -21,13 +21,12 @@ jobs:
       java-version: '21'
       gradle-tasks: 'clean build test'
 
-  # Step 2: Semantic Release
-  release:
-    name: Semantic Release
+  # Step 2: Semantic Versioning
+  version:
+    name: Semantic Versioning
     needs: [build-test]
-    uses: ./.github/workflows/release.yml
+    uses: ./.github/workflows/version.yml
     with:
-      node-version: 'lts/*'
       java-version: '21'
       git-author-name: 'GitHub Actions CI'
       git-author-email: 'ci@cubizor.net'
@@ -37,8 +36,8 @@ jobs:
   # Step 3 & 4: Build Versioned JAR and Publish to Nexus
   publish:
     name: Build & Publish
-    needs: [release]
-    if: needs.release.outputs.new-release-published == 'true'
+    needs: [version]
+    if: needs.version.outputs.new-release-published == 'true'
     uses: ./.github/workflows/publish.yml
     with:
       java-version: '21'
