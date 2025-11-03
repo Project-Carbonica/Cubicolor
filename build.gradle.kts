@@ -4,7 +4,7 @@ plugins {
 
 group = "net.cubizor.cubicolor"
 // Version from gradle.properties (managed by semantic-release)
-version = project.findProperty("project_version") ?: "0.0.0-dev"
+version = project.findProperty("version") ?: "0.0.0-dev"
 
 // Alt projeler için ortak yapılandırma
 subprojects {
