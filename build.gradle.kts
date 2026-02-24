@@ -50,18 +50,13 @@ subprojects {
             }
 
             repositories {
-                // Nexus repository (sadece CI'da kullanılır)
-                val nexusReleaseUrl = System.getenv("NEXUS_RELEASE_URL")
-                val nexusSnapshotUrl = System.getenv("NEXUS_SNAPSHOT_URL")
+                maven {
+                    name = "GitHubPackages"
+                    url = uri("https://maven.pkg.github.com/Project-Carbonica/Cubicolor")
 
-                if (nexusReleaseUrl != null && nexusSnapshotUrl != null) {
-                    maven {
-                        url = uri(if (version.toString().endsWith("SNAPSHOT")) nexusSnapshotUrl else nexusReleaseUrl)
-
-                        credentials {
-                            username = System.getenv("NEXUS_USERNAME")
-                            password = System.getenv("NEXUS_PASSWORD")
-                        }
+                    credentials {
+                        username = System.getenv("GITHUB_ACTOR") ?: findProperty("gpr.user") as String?
+                        password = System.getenv("GITHUB_TOKEN") ?: findProperty("gpr.key") as String?
                     }
                 }
             }

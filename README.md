@@ -31,7 +31,13 @@ Modular color and typography theming library for Java and Minecraft.
 
 ```gradle
 repositories {
-    maven { url 'https://nexus.example.com/repository/maven-releases/' }
+    maven {
+        url 'https://maven.pkg.github.com/Project-Carbonica/Cubicolor'
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 dependencies {

@@ -7,7 +7,11 @@
 ```kotlin
 repositories {
     maven {
-        url = uri("https://nexus.example.com/repository/maven-releases/")
+        url = uri("https://maven.pkg.github.com/Project-Carbonica/Cubicolor")
+        credentials {
+            username = project.findProperty("gpr.user")?.toString() ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key")?.toString() ?: System.getenv("GITHUB_TOKEN")
+        }
     }
 }
 
