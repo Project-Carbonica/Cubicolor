@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/Project-Carbonica/Cubicolor/compare/v1.4.0...v1.4.1) (2026-02-24)
+
+
+### Bug Fixes
+
+* fixed github token problem ([5bdb3f3](https://github.com/Project-Carbonica/Cubicolor/commit/5bdb3f34fe9df0c9cee7b3563713bc97e793275d))
+
 # [1.4.0](https://github.com/Project-Carbonica/Cubicolor/compare/v1.3.1...v1.4.0) (2025-11-03)
 
 
